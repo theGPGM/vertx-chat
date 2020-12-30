@@ -3,23 +3,21 @@ package org.george.dungeon_game.cmd;
 import org.george.bag.model.BagModel;
 import org.george.bag.model.BagModelImpl;
 import org.george.bag.pojo.PlayerItem;
+import org.george.config.LevelInfoConfig;
 import org.george.dungeon_game.cache.PlayerBuyHpRecordCache;
 import org.george.dungeon_game.cache.PlayerLevelCache;
 import org.george.dungeon_game.cache.bean.PlayerLevelCacheBean;
 import org.george.dungeon_game.dao.PlayerDGameRecordDao;
-import org.george.item.dao.bean.ItemBean;
+import org.george.hall.model.pojo.PlayerResult;
 import org.george.item.model.pojo.ItemResult;
-import org.george.pojo.Level;
+import org.george.pojo.LevelBean;
 import org.george.common.pojo.Message;
 import org.george.common.pojo.Messages;
 import org.george.dungeon_game.cache.DungeonGameCache;
 import org.george.dungeon_game.cache.DungeonGameCacheImpl;
 import org.george.dungeon_game.dao.bean.PlayerLevelBean;
 import org.george.hall.model.PlayerModel;
-import org.george.hall.model.PlayerModelImpl;
-import org.george.hall.pojo.Player;
 import org.george.item.model.ItemModel;
-import org.george.item.model.impl.ItemModelImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +38,8 @@ public class DungeonGameCMDs {
     private BagModel bagModel = BagModelImpl.getInstance();
 
     private ItemModel itemModel = ItemModel.getInstance();
+
+    private LevelInfoConfig levelInfoConfig = LevelInfoConfig.getInstance();
 
     private Random rand = new Random();
 
@@ -68,30 +68,38 @@ public class DungeonGameCMDs {
                 // 添加玩家
                 dungeonGameCache.addPlayer(userId);
                 // 获取玩家关卡信息
-                PlayerLevelCacheBean playerLevelCacheBean = playerLevelCache.getPlayerLevelByPlayerId()
+                PlayerLevelCacheBean cacheBean = playerLevelCache.getPlayerLevelByPlayerId(playerId);
+                if(cacheBean == null){
+                    PlayerLevelBean playerLevelBean = playerDGameRecordDao.getPlayerLevelByPlayerId(playerId);
+                    if(playerLevelBean == null){
+                        // 增加新的玩家关卡数据
+                        playerLevelBean = new PlayerLevelBean();
+                        playerLevelBean.setLevel(0);
+                        playerLevelBean.setLoseCount(0);
+                        playerLevelBean.setPlayerId(playerId);
+                        playerDGameRecordDao.addPlayerLevel(playerLevelBean);
 
-                PlayerLevelBean playerLevelBean = dungeonGameCache.getPlayerPlayerLevel(Integer.parseInt(userId));
-                // 刚开始玩，没有关卡记录，添加关卡记录
-                if(playerLevelBean == null){
-                    playerLevelBean = new PlayerLevelBean();
-                    playerLevelBean.setLevel(0);
-                    playerLevelBean.setLoseCount(0);
-                    playerLevelBean.setPlayerId(Integer.parseInt(userId));
-                    dungeonGameCache.addPlayerLevel(playerLevelBean);
-                    list.add(new Message(userId, "开始进入地下城闯关"));
-                    list.add(new Message(userId, playWayInfo()));
-                }else if(playerLevelBean.getLevel() == dungeonGameCache.getLevelNum()){ //  通关
+                        list.add(new Message(userId, "开始进入地下城闯关"));
+                        list.add(new Message(userId, playWayInfo()));
+                    }
+                    // 添加缓存
+                    cacheBean = playerLevelBean2CacheBean(playerLevelBean);
+                    playerLevelCache.addPlayerLevel(cacheBean);
+                }
+
+                //  通关
+                if(cacheBean.getLevel() == levelInfoConfig.getLevelNum()){
                     list.add(new Message(userId, "您已经通关了"));
                     dungeonGameCache.deletePlayer(userId);
                 }else{
-                    list.add(new Message(userId, "开始进入地下城闯关"));
-                    list.add(new Message(userId, playWayInfo()));
-                    Level level = dungeonGameCache.getLevelInfo(playerLevelBean.getLevel());
-                    Message message = levelInfo2Message(userId, level);
-                    list.add(message);
-
                     // 开始游戏 -1 点 hp
                     playerModel.updatePlayerHP(Integer.parseInt(userId), hp - 1);
+                    list.add(new Message(userId, "开始进入地下城闯关"));
+
+                    list.add(new Message(userId, playWayInfo()));
+                    LevelBean levelBean = levelInfoConfig.getLevelInfo(cacheBean.getLevel());
+                    Message message = levelInfo2Message(userId, levelBean);
+                    list.add(message);
                 }
             }
 
@@ -121,24 +129,37 @@ public class DungeonGameCMDs {
             } else if (Integer.parseInt(action) < 0 || Integer.parseInt(action) > 2) {
                 list.add(new Message(userId, "输入指令错误"));
             } else {
-                PlayerLevelBean playerLevelBean = dungeonGameCache.getPlayerPlayerLevel(Integer.parseInt(userId));
-                Player player = playerModel.getPlayerByPlayerId(Integer.parseInt(userId));
-                Level levelInfo = dungeonGameCache.getLevelInfo(playerLevelBean.getLevel());
+
+                PlayerLevelCacheBean cacheBean = playerLevelCache.getPlayerLevelByPlayerId(playerId);
+                if(cacheBean == null){
+                    PlayerLevelBean bean = playerDGameRecordDao.getPlayerLevelByPlayerId(playerId);
+                    cacheBean = playerLevelBean2CacheBean(bean);
+                    playerLevelCache.addPlayerLevel(cacheBean);
+                }
+
+                PlayerResult player = playerModel.getPlayerByPlayerId(playerId);
+                LevelBean levelBeanInfo = levelInfoConfig.getLevelInfo(cacheBean.getLevel());
 
                 // 获取游戏结果
-                int result = judge(levelInfo.getWinningRate());
+                int result = judge(levelBeanInfo.getWinningRate());
                 // 玩家胜利 || 十次保底赢
-                if (result == 1 || playerLevelBean.getLoseCount() == 10) {
-                    for(Message msg : win(player, playerLevelBean)){
+                if (result == 1 || cacheBean.getLoseCount() == 10) {
+                    for(Message msg : win(player, cacheBean)){
                         list.add(msg);
                     }
-                } else if (result == 0) { //  平局
+                } else if (result == 0) {
+                    //  平局
                     list.add(new Message(userId, "您和怪物同归于尽了，请重新开始游戏"));
                     dungeonGameCache.deletePlayer(userId);
-                } else {  // 失败
-                    // 更新玩家关卡信息
-                    playerLevelBean.setLoseCount(playerLevelBean.getLoseCount() + 1);
-                    dungeonGameCache.updatePlayerLevel(playerLevelBean);
+                } else {
+                    // 挑战失败，更新玩家关卡信息
+                    cacheBean.setLoseCount(cacheBean.getLoseCount() + 1);
+                    PlayerLevelBean bean = playerDGameRecordDao.getPlayerLevelByPlayerId(playerId);
+                    bean.setLoseCount(bean.getLoseCount() + 1);
+                    playerLevelCache.updatePlayerLevelSelective(cacheBean);
+                    playerDGameRecordDao.updateRecordSelective(bean);
+
+                    // 退出游戏
                     dungeonGameCache.deletePlayer(userId);
                     list.add(new Message(userId, "您输给了怪物\r\n请重新挑战"));
                 }
@@ -176,7 +197,7 @@ public class DungeonGameCMDs {
             int buyCount = dungeonGameCache.getBuyHpCount(playerId);
             int cost = buyCount + 1;
 
-            Player player = playerModel.getPlayerByPlayerId(playerId);
+            PlayerResult player = playerModel.getPlayerByPlayerId(playerId);
             if(buyCount == 10){
                 list.add(new Message(userId, "今天的购买达到上限，请明天再购买"));
             }else if(player.getHp() == 100){
@@ -295,7 +316,11 @@ public class DungeonGameCMDs {
     private List<Message> useItem(PlayerItem item){
         List<Message> list = new ArrayList<>();
         if(item.getItemId() == 1){
-            Player player = playerModel.getPlayerByPlayerId(item.getPlayerId());
+            Integer playerId = item.getPlayerId();
+            PlayerResult player = playerModel.getPlayerByPlayerId(playerId);
+            PlayerLevelCacheBean cacheBean = playerLevelCache.getPlayerLevelByPlayerId(playerId );
+
+
             PlayerLevelBean playerLevelBean = dungeonGameCache.getPlayerPlayerLevel(player.getPlayerId());
 
             // 更新背包
@@ -303,20 +328,20 @@ public class DungeonGameCMDs {
             bagModel.updatePlayerItem(player.getPlayerId(), item);
             ItemResult i = itemModel.getItemByItemId(item.getItemId());
             list.add(new Message("" + player.getPlayerId(), "您使用了道具: " + i.getItemName()));
-            for(Message msg : win(player, playerLevelBean)){
+            for(Message msg : win(player, cacheBean)){
                 list.add(msg);
             }
         }
         return list;
     }
 
-    private List<Message> win(Player player, PlayerLevelBean playerLevelBean){
+    private List<Message> win(PlayerResult player, PlayerLevelCacheBean cacheBean){
         List<Message> list = new ArrayList<>();
         list.add(new Message("" + player.getPlayerId(), "您获得本轮游戏的胜利"));
         list.add(new Message("" + player.getPlayerId(), "您获得了一个元宝，可以用来购买体力"));
         playerModel.updatePlayerGold(player.getPlayerId(), player.getGold()  + 1);
 
-        int playerId = Integer.parseInt("" + player.getPlayerId());
+        int playerId = player.getPlayerId();
 
         // 掉落道具
         if (dropItem(10)) {
@@ -347,20 +372,25 @@ public class DungeonGameCMDs {
             list.add(new Message("" + player.getPlayerId(), "您获得了一个通关金币，使用它可以通过一个关卡"));
         }
         // 更新玩家关卡信息
-        playerLevelBean.setLevel(playerLevelBean.getLevel() + 1);
-        playerLevelBean.setLoseCount(0);
-        dungeonGameCache.updatePlayerLevel(playerLevelBean);
+        cacheBean.setLevel(cacheBean.getLevel() + 1);
+        cacheBean.setLoseCount(0);
+        playerLevelCache.updatePlayerLevelSelective(cacheBean);
+
+        PlayerLevelBean bean = playerDGameRecordDao.getPlayerLevelByPlayerId(playerId);
+        bean.setLoseCount(bean.getLevel() + 1);
+        bean.setLoseCount(0);
+        playerDGameRecordDao.updateRecordSelective(bean);
         dungeonGameCache.deletePlayer("" + playerId);
         return list;
     }
 
-    private Message levelInfo2Message(String userId, Level level){
+    private Message levelInfo2Message(String userId, LevelBean levelBean){
         StringBuilder sb = new StringBuilder();
         sb.append("您正在挑战关卡[");
-        sb.append(level.getLevelName());
+        sb.append(levelBean.getLevelName());
         sb.append("]的");
         sb.append("怪物[");
-        sb.append(level.getMonster().getMonsterName());
+        sb.append(levelBean.getMonster().getMonsterName());
         sb.append("]");
         return new Message(userId, sb.toString());
     }
@@ -413,14 +443,11 @@ public class DungeonGameCMDs {
         return sb.toString();
     }
 
-    public static void main(String[] args) {
-        int count = 0;
-        DungeonGameCMDs dungeonGameCMDs = new DungeonGameCMDs();
-        for(int i = 0; i < 100000; i++){
-            if(dungeonGameCMDs.dropItem(10)){
-                count++;
-            }
-        }
-        System.out.println(count);
+    private PlayerLevelCacheBean playerLevelBean2CacheBean(PlayerLevelBean bean){
+        PlayerLevelCacheBean cacheBean = new PlayerLevelCacheBean();
+        cacheBean.setLevel(bean.getLevel());
+        cacheBean.setLoseCount(bean.getLoseCount());
+        cacheBean.setPlayerId(bean.getPlayerId());
+        return cacheBean;
     }
 }

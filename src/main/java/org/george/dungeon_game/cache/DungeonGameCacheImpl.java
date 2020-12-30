@@ -4,7 +4,7 @@ import org.apache.ibatis.session.SqlSession;
 
 import org.george.dungeon_game.cache.impl.PlayerBuyHpRecordCacheImpl;
 import org.george.dungeon_game.cache.impl.PlayerLevelCacheImpl;
-import org.george.pojo.Level;
+import org.george.pojo.LevelBean;
 import org.george.util.ThreadLocalSessionUtils;
 import org.george.dungeon_game.dao.PlayerDGameRecordDao;
 import org.george.dungeon_game.dao.bean.PlayerLevelBean;
@@ -22,7 +22,7 @@ public class DungeonGameCacheImpl implements DungeonGameCache {
 
     private Set<String> playerSet = new HashSet<>();
 
-    private List<Level> list;
+    private List<LevelBean> list;
 
     private PlayerLevelCache playerLevelCache = PlayerLevelCacheImpl.getInstance();
 
@@ -75,22 +75,6 @@ public class DungeonGameCacheImpl implements DungeonGameCache {
     @Override
     public boolean playerAtGame(String userId) {
         return playerSet.contains(userId);
-    }
-
-
-    @Override
-    public void addLevelInfo(List<Level> levelList) {
-        this.list = levelList;
-    }
-
-    @Override
-    public Level getLevelInfo(Integer level) {
-        return list.get(level);
-    }
-
-    @Override
-    public Integer getLevelNum() {
-        return list.size();
     }
 
     @Override

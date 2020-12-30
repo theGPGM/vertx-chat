@@ -1,17 +1,12 @@
 package org.george.dungeon_game.cache;
 
-import org.george.pojo.Level;
 import org.george.dungeon_game.dao.bean.PlayerLevelBean;
-
-import java.util.List;
 
 public interface DungeonGameCache {
 
     PlayerLevelBean getPlayerPlayerLevel(Integer playerId);
 
     void updatePlayerLevel(PlayerLevelBean level);
-
-    void addPlayerLevel(PlayerLevelBean level);
 
     /**
      * 添加游戏玩家
@@ -27,24 +22,6 @@ public interface DungeonGameCache {
      * @return
      */
     boolean playerAtGame(String userId);
-
-    /**
-     * 添加关卡信息
-     * @param levelList
-     */
-    void addLevelInfo(List<Level> levelList);
-
-    /**
-     * 获取关卡信息
-     * @param level
-     * @return
-     */
-    Level getLevelInfo(Integer level);
-
-    /**
-     * 获取关卡层数
-     */
-    Integer getLevelNum();
 
     /**
      * 获取玩家 hp 购买次数

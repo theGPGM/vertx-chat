@@ -5,7 +5,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.net.NetServer;
 import org.apache.ibatis.session.SqlSession;
 import org.george.cmd.model.CmdModel;
-import org.george.pojo.Level;
+import org.george.pojo.LevelBean;
 import org.george.common.pojo.Message;
 import org.george.common.pojo.Messages;
 import org.george.chat_room_game.model.GameModel;
@@ -95,8 +95,8 @@ public class Main extends AbstractVerticle {
   private void loadProperties(){
 
     // 加载关卡信息
-    List<Level> levels = org.george.util.CSVLevelReader.loadLevel("src/main/resources/csv/level.csv");
-    dungeonGameModel.addLevelInfo(levels);
+    List<LevelBean> levelBeans = org.george.util.CSVLevelReader.loadLevel("src/main/resources/csv/level.csv");
+    dungeonGameModel.addLevelInfo(levelBeans);
   }
 
   private void welCome(String hId){

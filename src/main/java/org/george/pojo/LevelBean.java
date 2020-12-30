@@ -1,6 +1,6 @@
 package org.george.pojo;
 
-public class Level {
+public class LevelBean {
 
     private Integer level;
 
@@ -52,7 +52,7 @@ public class Level {
         DroppingWinItemRate = droppingWinItemRate;
     }
 
-    public Level() {
+    public LevelBean() {
     }
 
     @Override

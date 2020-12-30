@@ -1,6 +1,6 @@
 package org.george.config.bean;
 
-import org.george.pojo.Level;
+import org.george.pojo.LevelBean;
 import org.george.pojo.Monster;
 import org.george.config.LevelInfoConfig;
 
@@ -10,12 +10,20 @@ import java.util.List;
 
 public class LevelInfoConfigImpl implements LevelInfoConfig {
 
-    List<Level> levels = new ArrayList<>();
+    List<LevelBean> levelBeans = new ArrayList<>();
+
+    private LevelInfoConfigImpl(){}
+
+    private static LevelInfoConfigImpl instance = new LevelInfoConfigImpl();
+
+    public static LevelInfoConfigImpl getInstance(){
+        return instance;
+    }
 
     @Override
     public void loadLevelInfo(String filename) {
         BufferedReader br = null;
-        List<Level> list = new ArrayList<>();
+        List<LevelBean> list = new ArrayList<>();
         File file = new File(filename);
         if(file == null){
             throw new RuntimeException("文件为空");
@@ -27,19 +35,19 @@ public class LevelInfoConfigImpl implements LevelInfoConfig {
                 String line = null;
                 while((line = br.readLine()) != null){
                     String[] properties = line.split(",");
-                    Level level = new Level();
+                    LevelBean levelBean = new LevelBean();
 
 
                     String property = properties[0];
-                    level.setLevel(Integer.parseInt(property));
-                    level.setLevelName(properties[1]);
+                    levelBean.setLevel(Integer.parseInt(property));
+                    levelBean.setLevelName(properties[1]);
                     Monster monster = new Monster();
                     monster.setMonsterId(Integer.parseInt(properties[2]));
                     monster.setMonsterName(properties[3]);
-                    level.setMonster(monster);
-                    level.setWinningRate(Integer.parseInt(properties[4]));
-                    level.setDroppingWinItemRate(Integer.parseInt(properties[5]));
-                    list.add(level);
+                    levelBean.setMonster(monster);
+                    levelBean.setWinningRate(Integer.parseInt(properties[4]));
+                    levelBean.setDroppingWinItemRate(Integer.parseInt(properties[5]));
+                    list.add(levelBean);
                 }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -47,5 +55,15 @@ public class LevelInfoConfigImpl implements LevelInfoConfig {
                 e.printStackTrace();
             }
         }
+    }
+
+    @Override
+    public LevelBean getLevelInfo(Integer level) {
+        return levelBeans.get(level);
+    }
+
+    @Override
+    public Integer getLevelNum() {
+        return levelBeans.size();
     }
 }

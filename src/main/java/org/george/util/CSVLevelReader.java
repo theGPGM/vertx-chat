@@ -1,6 +1,6 @@
 package org.george.util;
 
-import org.george.pojo.Level;
+import org.george.pojo.LevelBean;
 import org.george.pojo.Monster;
 
 import java.io.*;
@@ -9,9 +9,9 @@ import java.util.List;
 
 public class CSVLevelReader {
 
-    public static List<Level> loadLevel(String file){
+    public static List<LevelBean> loadLevel(String file){
         BufferedReader br = null;
-        List<Level> list = new ArrayList<>();
+        List<LevelBean> list = new ArrayList<>();
         try{
             br = new BufferedReader(new FileReader(new File(file)));
             // 第一行不读取
@@ -20,16 +20,16 @@ public class CSVLevelReader {
             String line = null;
             while((line = br.readLine()) != null){
                 String[] properties = line.split(",");
-                Level level = new Level();
-                level.setLevel(Integer.parseInt(properties[0]));
-                level.setLevelName(properties[1]);
+                LevelBean levelBean = new LevelBean();
+                levelBean.setLevel(Integer.parseInt(properties[0]));
+                levelBean.setLevelName(properties[1]);
                 Monster monster = new Monster();
                 monster.setMonsterId(Integer.parseInt(properties[2]));
                 monster.setMonsterName(properties[3]);
-                level.setMonster(monster);
-                level.setWinningRate(Integer.parseInt(properties[4]));
-                level.setDroppingWinItemRate(Integer.parseInt(properties[5]));
-                list.add(level);
+                levelBean.setMonster(monster);
+                levelBean.setWinningRate(Integer.parseInt(properties[4]));
+                levelBean.setDroppingWinItemRate(Integer.parseInt(properties[5]));
+                list.add(levelBean);
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
