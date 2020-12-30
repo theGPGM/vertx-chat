@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="target">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/target/vertx-chat-1.0-SNAPSHOT.jar!/" />
+      <root url="jar://$PROJECT_DIR$/target/vertx-chat-1.0-SNAPSHOT-prod.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

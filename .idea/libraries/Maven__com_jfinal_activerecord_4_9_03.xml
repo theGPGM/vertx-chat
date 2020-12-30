@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.jfinal:activerecord:4.9.03">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jfinal/activerecord/4.9.03/activerecord-4.9.03.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jfinal/activerecord/4.9.03/activerecord-4.9.03-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jfinal/activerecord/4.9.03/activerecord-4.9.03-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
