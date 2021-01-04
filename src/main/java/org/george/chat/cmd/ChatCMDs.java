@@ -2,7 +2,7 @@ package org.george.chat.cmd;
 
 
 import org.george.chat.cache.RoomCache;
-import org.george.chat.cache.RoomCacheImpl;
+import org.george.chat.cache.impl.RoomCacheImpl;
 import org.george.common.pojo.Message;
 import org.george.common.pojo.Messages;
 import org.george.hall.model.PlayerModel;

@@ -1,14 +1,14 @@
 package org.george.bag.cache.impl;
 
-import org.apache.ibatis.session.SqlSession;
 
 import org.george.bag.cache.BagCache;
-import org.george.bag.cache.mapper.PlayerItemMapper;
-import org.george.bag.cache.redis.BagRedisCache;
-import org.george.bag.cache.redis.BagRedisCacheImpl;
-import org.george.bag.pojo.PlayerItem;
-import org.george.util.ThreadLocalSessionUtils;
+import org.george.bag.cache.bean.PlayerItemCacheBean;
+import org.george.util.ThreadLocalJedisUtils;
+import redis.clients.jedis.Jedis;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class BagCacheImpl implements BagCache {
 
@@ -20,65 +20,53 @@ public class BagCacheImpl implements BagCache {
         return instance;
     }
 
-    private BagRedisCache bagRedisCache = BagRedisCacheImpl.getInstance();
-
     @Override
-    public void addPlayerItem(Integer playerId, PlayerItem item) {
-        bagRedisCache.addPlayerItem(playerId, item);
-        SqlSession session = ThreadLocalSessionUtils.getSession();
-        PlayerItemMapper mapper = session.getMapper(PlayerItemMapper.class);
-        mapper.addPlayerItem(playerId, item);
-    }
-
-    @Override
-    public List<PlayerItem> getAllPlayerItem(Integer playerId) {
-        if(bagRedisCache.getAllPlayerItems(playerId) == null){
-            SqlSession session = ThreadLocalSessionUtils.getSession();
-            PlayerItemMapper mapper = session.getMapper(PlayerItemMapper.class);
-            List<PlayerItem> items = mapper.getPlayerItems(playerId);
-
-            for(PlayerItem item : items){
-                bagRedisCache.addPlayerItem(playerId, item);
-            }
-
-            return items;
+    public List<PlayerItemCacheBean> getAllPlayerItem(Integer playerId) {
+        Jedis jedis = ThreadLocalJedisUtils.getJedis();
+        if(!jedis.exists("player#"+ playerId + "_items")){
+            return null;
         }else{
-            return bagRedisCache.getAllPlayerItems(playerId);
+            List<PlayerItemCacheBean> list = new ArrayList<>();
+            Map<String, String> map = jedis.hgetAll("player#" + playerId + "_items");
+            for(Map.Entry<String, String> entry : map.entrySet()){
+                list.add(getPlayerItem(playerId, Integer.parseInt(entry.getKey())));
+            }
+            return list;
         }
     }
 
     @Override
-    public void updatePlayerItem(Integer playerId, PlayerItem item) {
-        bagRedisCache.updatePlayerItem(playerId, item);
-        SqlSession session = ThreadLocalSessionUtils.getSession();
-        PlayerItemMapper mapper = session.getMapper(PlayerItemMapper.class);
-        mapper.updatePlayerItem(playerId, item);
+    public void addPlayerItem(PlayerItemCacheBean item) {
+        // 添加道具数据
+        Jedis jedis = ThreadLocalJedisUtils.getJedis();
+        jedis.hset("player#"+ item.getPlayerId() + "_items", String.valueOf(item.getItemId()), String.valueOf(item.getNum()));
     }
 
     @Override
-    public PlayerItem getPlayerItem(Integer playerId, Integer itemId) {
-        if(bagRedisCache.getPlayerItem(playerId, itemId) == null){
-            SqlSession session = ThreadLocalSessionUtils.getSession();
-            PlayerItemMapper mapper = session.getMapper(PlayerItemMapper.class);
-            PlayerItem item = mapper.getPlayerItem(playerId, itemId);
-            if(item == null){
-                return null;
-            }else{
-                bagRedisCache.addPlayerItem(playerId, item);
-                return item;
-            }
+    public void updatePlayerItem(PlayerItemCacheBean item) {
+        // 添加道具数据
+        Jedis jedis = ThreadLocalJedisUtils.getJedis();
+        jedis.hset("player#"+ item.getPlayerId() + "_items", String.valueOf(item.getItemId()), String.valueOf(item.getNum()));
+    }
+
+    @Override
+    public PlayerItemCacheBean getPlayerItem(Integer playerId, Integer itemId) {
+        Jedis jedis = ThreadLocalJedisUtils.getJedis();
+        if(!jedis.hexists("player#"+ playerId + "_items", String.valueOf(itemId))){
+            return null;
         }else{
-            return bagRedisCache.getPlayerItem(playerId, itemId);
+            PlayerItemCacheBean item = new PlayerItemCacheBean();
+            Integer num = Integer.parseInt(jedis.hget("player#"+ playerId + "_items", String.valueOf(itemId)));
+            item.setNum(num);
+            item.setItemId(itemId);
+            item.setPlayerId(playerId);
+            return item;
         }
     }
 
     @Override
     public void deletePlayerItem(Integer playerId, Integer itemId) {
-        if(bagRedisCache.getPlayerItem(playerId, itemId) != null){
-            bagRedisCache.deletePlayerItem(playerId, itemId);
-        }
-        SqlSession session = ThreadLocalSessionUtils.getSession();
-        PlayerItemMapper mapper = session.getMapper(PlayerItemMapper.class);
-        mapper.deletePlayerItem(playerId, itemId);
+        Jedis jedis = ThreadLocalJedisUtils.getJedis();
+        jedis.hdel("player#"+ playerId + "_items", String.valueOf(itemId));
     }
 }

@@ -1,19 +1,19 @@
 package org.george.bag.cache;
 
+import org.george.bag.cache.bean.PlayerItemCacheBean;
 import org.george.bag.cache.impl.BagCacheImpl;
-import org.george.bag.pojo.PlayerItem;
 
 import java.util.List;
 
 public interface BagCache {
 
-    List<PlayerItem> getAllPlayerItem(Integer playerId);
+    List<PlayerItemCacheBean> getAllPlayerItem(Integer playerId);
 
-    void addPlayerItem(Integer playerId, PlayerItem item);
+    void addPlayerItem(PlayerItemCacheBean item);
 
-    void updatePlayerItem(Integer playerId, PlayerItem item);
+    void updatePlayerItem(PlayerItemCacheBean item);
 
-    PlayerItem getPlayerItem(Integer playerId, Integer itemId);
+    PlayerItemCacheBean getPlayerItem(Integer playerId, Integer itemId);
 
     void deletePlayerItem(Integer playerId, Integer itemId);
 

@@ -1,8 +1,8 @@
 package org.george.dungeon_game.cmd;
 
 import org.george.bag.model.BagModel;
-import org.george.bag.model.BagModelImpl;
-import org.george.bag.pojo.PlayerItem;
+import org.george.bag.model.impl.BagModelImpl;
+import org.george.bag.model.bean.PlayerItemResult;
 import org.george.config.LevelInfoConfig;
 import org.george.dungeon_game.cache.PlayerBuyHpRecordCache;
 import org.george.dungeon_game.cache.PlayerLevelCache;
@@ -14,7 +14,7 @@ import org.george.pojo.LevelBean;
 import org.george.common.pojo.Message;
 import org.george.common.pojo.Messages;
 import org.george.dungeon_game.cache.DungeonGameCache;
-import org.george.dungeon_game.cache.DungeonGameCacheImpl;
+import org.george.dungeon_game.cache.impl.DungeonGameCacheImpl;
 import org.george.dungeon_game.dao.bean.PlayerLevelBean;
 import org.george.hall.model.PlayerModel;
 import org.george.item.model.ItemModel;
@@ -253,7 +253,7 @@ public class DungeonGameCMDs {
         if(args.length != 1){
             list.add(new Message(userId, "输入格式错误"));
         }else{
-            List<PlayerItem> items = bagModel.getAllPlayerItems(Integer.parseInt(userId));
+            List<PlayerItemResult> items = bagModel.getAllPlayerItems(Integer.parseInt(userId));
             if(items == null || items.size() == 0){
                 list.add(new Message(userId, "您的背包为空"));
             }else{
@@ -263,7 +263,7 @@ public class DungeonGameCMDs {
                 sb.append("    您的背包：");
                 sb.append("\r\n");
                 int count = 0;
-                for(PlayerItem item : items){
+                for(PlayerItemResult item : items){
                     if(item.getNum() != 0){
                         count++;
                         ItemResult i = itemModel.getItemByItemId(item.getItemId());
@@ -300,10 +300,11 @@ public class DungeonGameCMDs {
             if(itemBean == null){
                 list.add(new Message(userId, "您的背包中不存在该道具"));
             }else{
-                PlayerItem pItem = bagModel.getPlayerItem(Integer.parseInt(userId), itemId);
+                PlayerItemResult pItem = bagModel.getPlayerItem(Integer.parseInt(userId), itemId);
                 if(pItem == null || pItem.getNum() == 0){
                     list.add(new Message(userId, "您的背包中不存在该道具"));
                 }else{
+
                     for(Message msg : useItem(pItem)){
                         list.add(msg);
                     }
@@ -313,19 +314,23 @@ public class DungeonGameCMDs {
         return new Messages(list);
     }
 
-    private List<Message> useItem(PlayerItem item){
+    private List<Message> useItem(PlayerItemResult item){
         List<Message> list = new ArrayList<>();
         if(item.getItemId() == 1){
             Integer playerId = item.getPlayerId();
             PlayerResult player = playerModel.getPlayerByPlayerId(playerId);
-            PlayerLevelCacheBean cacheBean = playerLevelCache.getPlayerLevelByPlayerId(playerId );
 
-
-            PlayerLevelBean playerLevelBean = dungeonGameCache.getPlayerPlayerLevel(player.getPlayerId());
+            PlayerLevelCacheBean cacheBean = playerLevelCache.getPlayerLevelByPlayerId(playerId);
+            if(cacheBean == null){
+                PlayerLevelBean bean = playerDGameRecordDao.getPlayerLevelByPlayerId(playerId);
+                cacheBean = playerLevelBean2CacheBean(bean);
+                playerLevelCache.addPlayerLevel(cacheBean);
+            }
 
             // 更新背包
             item.setNum(item.getNum() - 1);
-            bagModel.updatePlayerItem(player.getPlayerId(), item);
+            item.setPlayerId(playerId);
+            bagModel.updatePlayerItem(item);
             ItemResult i = itemModel.getItemByItemId(item.getItemId());
             list.add(new Message("" + player.getPlayerId(), "您使用了道具: " + i.getItemName()));
             for(Message msg : win(player, cacheBean)){
@@ -347,26 +352,28 @@ public class DungeonGameCMDs {
         if (dropItem(10)) {
 
             boolean flag = false;
-            List<PlayerItem> items = bagModel.getAllPlayerItems(playerId);
+            List<PlayerItemResult> items = bagModel.getAllPlayerItems(playerId);
             if(items == null || items.size() == 0){
                 flag = true;
             }else{
-                for(PlayerItem playerItem : items){
+                for(PlayerItemResult item : items){
                     // 拥有必胜道具
-                    if (playerItem.getItemId() == 1) {
-                        playerItem.setNum(playerItem.getNum() + 1);
-                        bagModel.updatePlayerItem(playerId, playerItem);
+                    if (item.getItemId() == 1) {
+                        item.setNum(item.getNum() + 1);
+                        item.setPlayerId(playerId);
+                        bagModel.updatePlayerItem(item);
                         flag = true;
                     }
                 }
             }
 
             if(!flag){
-                PlayerItem item = new PlayerItem();
+                PlayerItemResult item = new PlayerItemResult();
                 item.setNum(1);
                 item.setPlayerId(playerId);
                 item.setItemId(1);
-                bagModel.addPlayerItem(playerId, item);
+                item.setPlayerId(playerId);
+                bagModel.addPlayerItem(item);
             }
 
             list.add(new Message("" + player.getPlayerId(), "您获得了一个通关金币，使用它可以通过一个关卡"));

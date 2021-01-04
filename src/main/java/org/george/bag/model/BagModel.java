@@ -1,17 +1,17 @@
 package org.george.bag.model;
 
 
-import org.george.bag.pojo.PlayerItem;
+import org.george.bag.model.bean.PlayerItemResult;
 
 import java.util.List;
 
 public interface BagModel {
 
-    List<PlayerItem> getAllPlayerItems(Integer playerId);
+    List<PlayerItemResult> getAllPlayerItems(Integer playerId);
 
-    void addPlayerItem(Integer playerId, PlayerItem item);
+    void addPlayerItem(PlayerItemResult item);
 
-    void updatePlayerItem(Integer playerId, PlayerItem item);
+    void updatePlayerItem(PlayerItemResult item);
 
-    PlayerItem getPlayerItem(Integer playerId, Integer itemId);
+    PlayerItemResult getPlayerItem(Integer playerId, Integer itemId);
 }

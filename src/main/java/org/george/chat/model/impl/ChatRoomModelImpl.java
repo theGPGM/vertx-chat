@@ -1,7 +1,7 @@
 package org.george.chat.model.impl;
 
 import org.george.chat.cache.RoomCache;
-import org.george.chat.cache.RoomCacheImpl;
+import org.george.chat.cache.impl.RoomCacheImpl;
 import org.george.chat.model.ChatRoomModel;
 
 import java.util.List;

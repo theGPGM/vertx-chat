@@ -2,7 +2,7 @@ package org.george.dungeon_game.model;
 
 import org.george.pojo.LevelBean;
 import org.george.dungeon_game.cache.DungeonGameCache;
-import org.george.dungeon_game.cache.DungeonGameCacheImpl;
+import org.george.dungeon_game.cache.impl.DungeonGameCacheImpl;
 
 import java.util.List;
 
@@ -16,11 +16,6 @@ public class DungeonGameModelImpl implements DungeonGameModel{
 
     public static DungeonGameModelImpl getInstance(){
         return instance;
-    }
-
-    @Override
-    public void addLevelInfo(List<LevelBean> list) {
-        dungeonGameCache.addLevelInfo(list);
     }
 
     @Override

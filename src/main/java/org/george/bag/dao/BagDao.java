@@ -1,0 +1,23 @@
+package org.george.bag.dao;
+
+
+import org.george.bag.dao.bean.PlayerItemBean;
+
+import java.util.List;
+
+public interface BagDao {
+
+    void addPlayerItem(PlayerItemBean item);
+
+    List<PlayerItemBean> getPlayerItems(Integer player);
+
+    void updatePlayerItem(PlayerItemBean item);
+
+    void deletePlayerItem(Integer playerId, Integer itemId);
+
+    PlayerItemBean getPlayerItem(Integer playerId, Integer itemId);
+
+    static BagDao getInstance(){
+        return BagDao.getInstance();
+    }
+}

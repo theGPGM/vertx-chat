@@ -5,13 +5,15 @@ import org.george.auction.cache.AuctionCache;
 import org.george.auction.cache.AuctionCacheImpl;
 import org.george.auction.pojo.AuctionItem;
 import org.george.bag.model.BagModel;
-import org.george.bag.model.BagModelImpl;
-import org.george.bag.pojo.PlayerItem;
+import org.george.bag.model.impl.BagModelImpl;
+import org.george.bag.model.bean.PlayerItemResult;
+import org.george.hall.model.pojo.PlayerResult;
 import org.george.item.model.ItemModel;
 import org.george.item.model.impl.ItemModelImpl;
 import org.george.item.dao.bean.ItemBean;
 import org.george.common.pojo.Message;
 import org.george.common.pojo.Messages;
+import org.george.item.model.pojo.ItemResult;
 import org.george.util.RedisLockUtils;
 import org.george.hall.model.PlayerModel;
 import org.george.hall.model.PlayerModelImpl;
@@ -19,6 +21,8 @@ import org.george.hall.pojo.Player;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class AuctionCMDs {
 
@@ -29,6 +33,8 @@ public class AuctionCMDs {
     private BagModel bagModel = BagModelImpl.getInstance();
 
     private ItemModel itemModel = ItemModelImpl.getInstance();
+
+    private static final int win_item_refresh_num = 10;
 
     /**
      * 购买拍卖会物品
@@ -49,7 +55,7 @@ public class AuctionCMDs {
                 Integer itemId = Integer.parseInt(args[1]);
                 Integer buyNum = Integer.parseInt(args[2]);
                 AuctionItem auction = auctionCache.getAuction(itemId);
-                Player player = playerModel.getPlayerByPlayerId(Integer.parseInt(userId));
+                PlayerResult player = playerModel.getPlayerByPlayerId(Integer.parseInt(userId));
 
                 try{
                     // 购买加分布式锁，10 秒过期
@@ -63,23 +69,26 @@ public class AuctionCMDs {
                         list.add(new Message(userId, "库存不足"));
                     }else if(player.getGold() < buyNum * auction.getCost()){
                         list.add(new Message(userId, "元宝不足"));
-                    }else{
+                    }else {
+
                         // 增加背包物品
-                        List<PlayerItem> items = bagModel.getAllPlayerItems(player.getPlayerId());
+                        List<PlayerItemResult> items = bagModel.getAllPlayerItems(player.getPlayerId());
 
                         boolean owned = false;
-                        for(PlayerItem item : items){
-                            if(item.getItemId().equals(auction.getItemId())){
+                        for (PlayerItemResult item : items) {
+                            if (item.getItemId().equals(auction.getItemId())) {
                                 item.setNum(item.getNum() + buyNum);
-                                bagModel.updatePlayerItem(player.getPlayerId(), item);
+                                item.setPlayerId(player.getPlayerId());
+                                bagModel.updatePlayerItem(item);
                                 owned = true;
                             }
                         }
-                        if(!owned){
-                            PlayerItem item = new PlayerItem();
+                        if (!owned) {
+                            PlayerItemResult item = new PlayerItemResult();
+                            item.setPlayerId(player.getPlayerId());
                             item.setNum(buyNum);
                             item.setItemId(auction.getItemId());
-                            bagModel.addPlayerItem(player.getPlayerId(), item);
+                            bagModel.addPlayerItem(item);
                         }
                         // 更新拍卖会数据
                         auctionCache.updateAuctionItemNum(auction.getItemId(), auction.getNum() - buyNum);
@@ -111,7 +120,7 @@ public class AuctionCMDs {
             sb.append("     拍卖会物品如下：");
             sb.append("\r\n");
             for(AuctionItem auctionItem : auctions){
-                ItemBean itemBean = itemModel.getItemByItemId(auctionItem.getItemId());
+                ItemResult itemBean = itemModel.getItemByItemId(auctionItem.getItemId());
                 sb.append("====>道具 ID：" + auctionItem.getItemId());
                 sb.append("\r\n");
                 sb.append("     道具名：" + itemBean.getItemName());
@@ -140,5 +149,10 @@ public class AuctionCMDs {
             if(c > '9' || c < '0') return false;
         }
         return true;
+    }
+
+    public static void main(String[] args) {
+        AtomicBoolean atomicBoolean = new AtomicBoolean();
+        System.out.println(atomicBoolean.get());
     }
 }

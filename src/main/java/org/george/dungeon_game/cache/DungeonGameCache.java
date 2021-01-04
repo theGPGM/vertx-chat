@@ -1,12 +1,6 @@
 package org.george.dungeon_game.cache;
 
-import org.george.dungeon_game.dao.bean.PlayerLevelBean;
-
 public interface DungeonGameCache {
-
-    PlayerLevelBean getPlayerPlayerLevel(Integer playerId);
-
-    void updatePlayerLevel(PlayerLevelBean level);
 
     /**
      * 添加游戏玩家

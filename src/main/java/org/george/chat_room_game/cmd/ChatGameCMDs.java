@@ -5,7 +5,7 @@ import org.george.chat.model.ChatRoomModel;
 import org.george.common.pojo.Message;
 import org.george.common.pojo.Messages;
 import org.george.chat_room_game.cache.GameCache;
-import org.george.chat_room_game.cache.GameCacheImpl;
+import org.george.chat_room_game.cache.impl.GameCacheImpl;
 
 import java.util.ArrayList;
 import java.util.List;

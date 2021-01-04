@@ -1,4 +1,4 @@
-level,level_name,monster_id,monster_name,winning_rate,dropping_100%_win_item_rate
+levelBean,level_name,monster_id,monster_name,winning_rate,dropping_100%_win_item_rate
 1,第一关,1,一号怪物,90,10
 2,第二关,2,二号怪物,80,10
 3,第三关,3,三号怪物,70,10
