@@ -1,10 +1,10 @@
 package org.george.dungeon_game.model;
 
-import org.george.pojo.LevelBean;
+import org.george.hall.ClientCloseEventObserver;
 
-import java.util.List;
+public interface DungeonGameModel extends ClientCloseEventObserver {
 
-public interface DungeonGameModel {
-
-    void quitGame(String userId);
+    static DungeonGameModel getInstance(){
+        return DungeonGameModelImpl.getInstance();
+    }
 }

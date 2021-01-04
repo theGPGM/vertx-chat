@@ -1,14 +1,15 @@
 package org.george.cmd.model.impl;
 
-import org.apache.ibatis.session.SqlSession;
 import org.george.cmd.cache.CmdCache;
 import org.george.cmd.model.CmdModel;
 import org.george.cmd.model.bean.CmdMessageResult;
-import org.george.common.pojo.Message;
-import org.george.common.pojo.Messages;
+import org.george.config.bean.CmdDescConfigBean;
+import org.george.pojo.Message;
+import org.george.pojo.Messages;
 import org.george.config.CmdDescConfig;
 import org.george.hall.model.ClientModel;
-import org.george.util.SessionPool;
+import org.george.util.JedisPool;
+import org.george.util.ThreadLocalJedisUtils;
 import redis.clients.jedis.Jedis;
 
 import java.lang.reflect.InvocationTargetException;
@@ -90,9 +91,7 @@ public class CmdModelImpl implements CmdModel {
             Object cmdObj = cmdCache.getCmdClassObj(cmd);
 
             Jedis jedis = org.george.util.JedisPool.getJedis();
-            SqlSession sqlSession = org.george.util.SessionPool.openSession();
-            org.george.util.ThreadLocalJedisUtils.addJedis(jedis);
-            org.george.util.ThreadLocalSessionUtils.addSqlSession(sqlSession);
+            ThreadLocalJedisUtils.addJedis(jedis);
             try{
                 // 登录
                 if("login".equals(cmd) || "register".equals(cmd)){
@@ -114,6 +113,7 @@ public class CmdModelImpl implements CmdModel {
                             String userHId = clientModel.getHIdByUserId(userId);
                             clientModel.logout(userId);
                             list.add(new CmdMessageResult(userHId, "账户异地登录"));
+                            list.add(new CmdMessageResult(hId, msg.getMessage()));
                             clientModel.addUserIdHId(userId, hId);
                         }else{
                             // 正常登录
@@ -144,12 +144,15 @@ public class CmdModelImpl implements CmdModel {
             } catch (InvocationTargetException e) {
                 e.printStackTrace();
             } finally {
-                sqlSession.commit();
-                org.george.util.JedisPool.returnJedis(jedis);
-                SessionPool.close(sqlSession);
+                JedisPool.returnJedis(jedis);
             }
         }
         return list;
+    }
+
+    @Override
+    public List<CmdDescConfigBean> getCmdDescriptions() {
+        return cmdDescConfig.getAllCmdDescriptionBeans();
     }
 
     public static CmdModelImpl getInstance(){

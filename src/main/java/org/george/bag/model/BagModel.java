@@ -2,6 +2,7 @@ package org.george.bag.model;
 
 
 import org.george.bag.model.bean.PlayerItemResult;
+import org.george.bag.model.impl.BagModelImpl;
 
 import java.util.List;
 
@@ -14,4 +15,8 @@ public interface BagModel {
     void updatePlayerItem(PlayerItemResult item);
 
     PlayerItemResult getPlayerItem(Integer playerId, Integer itemId);
+
+    static BagModel getInstance(){
+        return BagModelImpl.getInstance();
+    }
 }

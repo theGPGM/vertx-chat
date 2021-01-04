@@ -3,7 +3,7 @@ package org.george.dungeon_game.cache.impl;
 import org.george.dungeon_game.cache.DungeonGameCache;
 import org.george.dungeon_game.cache.PlayerBuyHpRecordCache;
 import org.george.dungeon_game.cache.PlayerLevelCache;
-import org.george.pojo.LevelBean;
+import org.george.config.bean.LevelBean;
 
 import java.util.Calendar;
 import java.util.HashSet;

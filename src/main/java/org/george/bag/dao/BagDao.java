@@ -2,6 +2,7 @@ package org.george.bag.dao;
 
 
 import org.george.bag.dao.bean.PlayerItemBean;
+import org.george.bag.dao.impl.BagDaoImpl;
 
 import java.util.List;
 
@@ -18,6 +19,6 @@ public interface BagDao {
     PlayerItemBean getPlayerItem(Integer playerId, Integer itemId);
 
     static BagDao getInstance(){
-        return BagDao.getInstance();
+        return BagDaoImpl.getInstance();
     }
 }

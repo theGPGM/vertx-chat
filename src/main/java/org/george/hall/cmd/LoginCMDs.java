@@ -1,7 +1,7 @@
 package org.george.hall.cmd;
 
-import org.george.common.pojo.Message;
-import org.george.common.pojo.Messages;
+import org.george.pojo.Message;
+import org.george.pojo.Messages;
 import org.george.dungeon_game.model.DungeonGameModel;
 import org.george.dungeon_game.model.DungeonGameModelImpl;
 import org.george.hall.cache.PlayerCache;
@@ -49,6 +49,7 @@ public class LoginCMDs {
                 }else if(!bean.getPassword().equals(password)){
                     list.add(new Message(null, "用户名或密码错误"));
                 }else{
+                    cacheBean = bean2CacheBean(bean);
                     list.add(new Message(String.valueOf(bean.getPlayerId()), "用户登录成功"));
                     // 添加缓存
                     playerCache.addPlayer(bean2CacheBean(bean));
@@ -160,7 +161,6 @@ public class LoginCMDs {
         else {
             clientModel.logout(userId);
             msg = new Message(null,"用户退出登录");
-            dungeonGameModel.quitGame(userId);
         }
         list.add(msg);
         return new Messages(list);

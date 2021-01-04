@@ -1,6 +1,6 @@
 package org.george.chat_room_game.model;
 
-import org.george.common.pojo.Message;
+import org.george.pojo.Message;
 
 import java.util.List;
 

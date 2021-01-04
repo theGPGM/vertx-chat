@@ -1,8 +1,5 @@
 package org.george.auction.cmd;
 
-import org.george.auction.cache.AuctionCache;
-
-import org.george.auction.cache.AuctionCacheImpl;
 import org.george.auction.pojo.AuctionItem;
 import org.george.bag.model.BagModel;
 import org.george.bag.model.impl.BagModelImpl;
@@ -10,25 +7,21 @@ import org.george.bag.model.bean.PlayerItemResult;
 import org.george.hall.model.pojo.PlayerResult;
 import org.george.item.model.ItemModel;
 import org.george.item.model.impl.ItemModelImpl;
-import org.george.item.dao.bean.ItemBean;
-import org.george.common.pojo.Message;
-import org.george.common.pojo.Messages;
+import org.george.pojo.Message;
+import org.george.pojo.Messages;
 import org.george.item.model.pojo.ItemResult;
 import org.george.util.RedisLockUtils;
 import org.george.hall.model.PlayerModel;
-import org.george.hall.model.PlayerModelImpl;
-import org.george.hall.pojo.Player;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class AuctionCMDs {
 
     private AuctionCache auctionCache = AuctionCacheImpl.getInstance();
 
-    private PlayerModel playerModel = PlayerModelImpl.getInstance();
+    private PlayerModel playerModel = PlayerModel.getInstance();
 
     private BagModel bagModel = BagModelImpl.getInstance();
 

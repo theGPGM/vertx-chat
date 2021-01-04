@@ -23,7 +23,7 @@ public class ClientModelImpl implements ClientModel {
   }
 
   @Override
-  public void closeClient(String hId) {
+  public void clientClosed(String hId) {
     NetSocket netSocket = clientMap.get(hId);
     if(netSocket != null)
       netSocket.close();
@@ -58,5 +58,15 @@ public class ClientModelImpl implements ClientModel {
   @Override
   public void addClient(String HId, NetSocket socket){
     clientMap.put(HId, socket);
+  }
+
+
+  @Override
+  public void update(String hId) {
+    clientClosed(hId);
+    String userId = getUserIdByHId(hId);
+    if(userId != null){
+      logout(userId);
+    }
   }
 }

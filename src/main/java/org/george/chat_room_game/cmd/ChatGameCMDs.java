@@ -2,8 +2,8 @@ package org.george.chat_room_game.cmd;
 
 
 import org.george.chat.model.ChatRoomModel;
-import org.george.common.pojo.Message;
-import org.george.common.pojo.Messages;
+import org.george.pojo.Message;
+import org.george.pojo.Messages;
 import org.george.chat_room_game.cache.GameCache;
 import org.george.chat_room_game.cache.impl.GameCacheImpl;
 

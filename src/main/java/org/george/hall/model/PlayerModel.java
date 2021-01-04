@@ -1,5 +1,6 @@
 package org.george.hall.model;
 
+import org.george.hall.model.impl.PlayerModelImpl;
 import org.george.hall.model.pojo.PlayerResult;
 
 import java.util.List;

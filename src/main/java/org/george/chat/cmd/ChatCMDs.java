@@ -2,20 +2,18 @@ package org.george.chat.cmd;
 
 
 import org.george.chat.cache.RoomCache;
-import org.george.chat.cache.impl.RoomCacheImpl;
-import org.george.common.pojo.Message;
-import org.george.common.pojo.Messages;
+import org.george.pojo.Message;
+import org.george.pojo.Messages;
 import org.george.hall.model.PlayerModel;
-import org.george.hall.model.PlayerModelImpl;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ChatCMDs {
 
-    private RoomCache roomCache = RoomCacheImpl.getInstance();
+    private RoomCache roomCache = RoomCache.getInstance();
 
-    private PlayerModel playerModel = PlayerModelImpl.getInstance();
+    private PlayerModel playerModel = PlayerModel.getInstance();
 
     public Messages createChatRoom(String...args){
 

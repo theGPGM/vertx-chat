@@ -1,14 +1,14 @@
 package org.george.dungeon_game.model;
 
-import org.george.pojo.LevelBean;
 import org.george.dungeon_game.cache.DungeonGameCache;
 import org.george.dungeon_game.cache.impl.DungeonGameCacheImpl;
-
-import java.util.List;
+import org.george.hall.model.ClientModel;
 
 public class DungeonGameModelImpl implements DungeonGameModel{
 
     private DungeonGameCache dungeonGameCache = DungeonGameCacheImpl.getInstance();
+
+    private ClientModel clientModel = ClientModel.getInstance();
 
     private DungeonGameModelImpl(){}
 
@@ -19,9 +19,12 @@ public class DungeonGameModelImpl implements DungeonGameModel{
     }
 
     @Override
-    public void quitGame(String userId) {
-        if(dungeonGameCache.playerAtGame(userId)){
-            dungeonGameCache.deletePlayer(userId);
+    public void update(String hId) {
+        String userId = clientModel.getUserIdByHId(hId);
+        if(userId != null){
+            if(dungeonGameCache.playerAtGame(userId)){
+                dungeonGameCache.deletePlayer(userId);
+            }
         }
     }
 }

@@ -3,43 +3,30 @@ package org.george;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.net.NetServer;
-import org.apache.ibatis.session.SqlSession;
 import org.george.cmd.model.CmdModel;
 import org.george.cmd.model.bean.CmdMessageResult;
-import org.george.pojo.LevelBean;
-import org.george.common.pojo.Message;
-import org.george.common.pojo.Messages;
-import org.george.chat_room_game.model.GameModel;
-import org.george.chat_room_game.model.impl.GameModelImpl;
+import org.george.config.LevelInfoConfig;
+import org.george.config.bean.CmdDescConfigBean;
 import org.george.dungeon_game.model.DungeonGameModel;
-import org.george.dungeon_game.model.DungeonGameModelImpl;
+import org.george.hall.ClientCloseHandler;
 import org.george.hall.model.ClientModel;
 import org.george.hall.model.impl.ClientModelImpl;
+import org.george.util.JFinalUtils;
+import org.george.util.MessageOuter;
 import org.george.util.PropertiesUtils;
-import org.george.util.SessionPool;
-import redis.clients.jedis.Jedis;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
 
 public class Main extends AbstractVerticle {
 
-  private Map<String, Object> commandClassMap = new HashMap<>();
-
-  private Map<String, Method> commandMethodMap = new HashMap<>();
-
-  private List<String> commandDescriptionList = new ArrayList<>();
-
   private ClientModel clientModel = ClientModelImpl.getInstance();
 
-  private org.george.util.MessageOuter messageOuter = org.george.util.MessageOuter.getInstance();
+  private DungeonGameModel dungeonGameModel = DungeonGameModel.getInstance();
 
-  private GameModel gameModel = GameModelImpl.getInstance();
-
-  private DungeonGameModel dungeonGameModel = DungeonGameModelImpl.getInstance();
+  private MessageOuter messageOuter = MessageOuter.getInstance();
 
   private CmdModel cmdModel = CmdModel.getInstance();
+
+  private LevelInfoConfig levelInfoConfig = LevelInfoConfig.getInstance();
 
   public static void main(String[] args) {
     Vertx.vertx().deployVerticle(new Main());
@@ -52,8 +39,14 @@ public class Main extends AbstractVerticle {
 
     // 加载配置
     vertx.executeBlocking(promise -> {
+      JFinalUtils.initJFinalConfig();
       cmdModel.loadCmdDescriptionProperties(PropertiesUtils.loadProperties("src/main/resources/conf/description.properties"));
       cmdModel.loadCmdProperties(PropertiesUtils.loadProperties("src/main/resources/conf/cmds.properties"));
+      levelInfoConfig.loadLevelInfo("src/main/resources/csv/level.csv");
+
+      // 观察者模式，添加客户端关闭事件观察者
+      ClientCloseHandler.addObserver(dungeonGameModel);
+      ClientCloseHandler.addObserver(clientModel);
     });
 
     // 监听连接
@@ -70,17 +63,15 @@ public class Main extends AbstractVerticle {
           for(CmdMessageResult msg : list){
             messageOuter.out(msg.getMessage(), msg.gethId());
           }
+        }, res -> {
+          res.cause().printStackTrace();
         });
       });
 
       // 客户端直接退出时，清除缓存
       handler.closeHandler(fun -> {
         vertx.executeBlocking(promise -> {
-          clientModel.closeClient(hId);
-          String userId = clientModel.getUserIdByHId(hId);
-          if(userId != null){
-            clientModel.logout(userId);
-          }
+          ClientCloseHandler.notify(hId);
         });
       });
     });
@@ -93,8 +84,11 @@ public class Main extends AbstractVerticle {
     StringBuilder sb = new StringBuilder();
     sb.append("欢迎登录,您可以使用以下命令\r\n");
     int i = 1;
-    for(String description : commandDescriptionList){
-      sb.append(i++).append("、").append(description).append("\r\n");
+    for(CmdDescConfigBean bean : cmdModel.getCmdDescriptions()){
+      sb.append(bean.getCmd());
+      sb.append(":");
+      sb.append(bean.getDesc());
+      sb.append("\r\n");
     }
     messageOuter.out(sb.toString(), hId);
   }

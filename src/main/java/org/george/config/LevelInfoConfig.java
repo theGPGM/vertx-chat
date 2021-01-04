@@ -1,7 +1,7 @@
 package org.george.config;
 
-import org.george.config.bean.LevelInfoConfigImpl;
-import org.george.pojo.LevelBean;
+import org.george.config.impl.LevelInfoConfigImpl;
+import org.george.config.bean.LevelBean;
 
 public interface LevelInfoConfig {
 
@@ -12,7 +12,7 @@ public interface LevelInfoConfig {
      * @param level
      * @return
      */
-    LevelBean getLevelInfo(Integer level);
+    LevelBean getLevelBean(Integer level);
 
     /**
      * 获取关卡层数

@@ -18,22 +18,27 @@ public class CmdDescConfigImpl implements CmdDescConfig {
         return instance;
     }
 
-    private final Map<String, CmdDescConfigBean> map = new HashMap<>();
-
+    private final List<CmdDescConfigBean> list = new ArrayList<>();
     @Override
     public void addCmdDescription(String cmd, String description) {
         CmdDescConfigBean bean = new CmdDescConfigBean();
         bean.setCmd(cmd);
         bean.setDesc(description);
+        list.add(bean);
     }
 
     @Override
     public CmdDescConfigBean getCmdDescriptionBean(String cmd) {
-        return map.get(cmd);
+        for(CmdDescConfigBean bean : list){
+            if(bean.getCmd().equals(cmd)){
+                return bean;
+            }
+        }
+        return null;
     }
 
     @Override
     public List<CmdDescConfigBean> getAllCmdDescriptionBeans() {
-        return new ArrayList<>(map.values());
+        return list;
     }
 }

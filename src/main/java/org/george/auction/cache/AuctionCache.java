@@ -1,21 +1,23 @@
 package org.george.auction.cache;
 
-import org.apache.ibatis.annotations.Param;
-import org.george.auction.pojo.AuctionItem;
+import org.george.auction.cache.bean.AuctionItemCacheBean;
+import org.george.auction.cache.impl.AuctionCacheImpl;
 
 import java.util.List;
 
 public interface AuctionCache {
 
-    List<AuctionItem> getAuctions();
+    List<AuctionItemCacheBean> getAuctions();
 
-    void addAuctionItem(AuctionItem item);
+    void addAuctionItemCacheBean(AuctionItemCacheBean item);
 
-    void updateAuctionItemCost(@Param("itemId") Integer itemId, @Param("cost") Integer cost);
+    void updateSelective(AuctionItemCacheBean item);
 
-    void updateAuctionItemNum(@Param("itemId") Integer itemId, @Param("num") Integer num);
+    void deleteAuctionItemCacheBean(Integer itemId);
 
-    void deleteAuctionItem(Integer itemId);
-
-    AuctionItem getAuction(Integer itemId);
+    AuctionItemCacheBean getAuction(Integer itemId);
+    
+    static AuctionCache getInstance(){
+        return AuctionCacheImpl.getInstance();
+    }
 }

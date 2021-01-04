@@ -1,9 +1,7 @@
 package org.george.hall.dao;
 
-import org.apache.ibatis.annotations.Param;
 import org.george.hall.dao.bean.PlayerBean;
 import org.george.hall.dao.impl.PlayerDaoImpl;
-import org.george.hall.pojo.Player;
 
 import java.util.List;
 

@@ -1,5 +1,7 @@
 package org.george.chat.cache;
 
+import org.george.chat.cache.impl.RoomCacheImpl;
+
 import java.util.List;
 
 public interface RoomCache {
@@ -33,4 +35,8 @@ public interface RoomCache {
      * @return
      */
     boolean existsRoom(String roomId);
+
+    static RoomCache getInstance(){
+        return RoomCacheImpl.getInstance();
+    }
 }

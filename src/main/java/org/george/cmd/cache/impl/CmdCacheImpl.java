@@ -18,8 +18,6 @@ public class CmdCacheImpl implements CmdCache {
 
     private Map<String, Method> cmdMethodMap = new HashMap<>();
 
-    private List<String> commandDescriptions = new ArrayList<>();
-
     public void addCmdClassObj(String cmd, Object obj){
         cmdClassObjMap.put(cmd, obj);
     }

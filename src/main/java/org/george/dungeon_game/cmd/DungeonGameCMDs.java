@@ -1,18 +1,16 @@
 package org.george.dungeon_game.cmd;
 
 import org.george.bag.model.BagModel;
-import org.george.bag.model.impl.BagModelImpl;
 import org.george.bag.model.bean.PlayerItemResult;
 import org.george.config.LevelInfoConfig;
-import org.george.dungeon_game.cache.PlayerBuyHpRecordCache;
 import org.george.dungeon_game.cache.PlayerLevelCache;
 import org.george.dungeon_game.cache.bean.PlayerLevelCacheBean;
 import org.george.dungeon_game.dao.PlayerDGameRecordDao;
 import org.george.hall.model.pojo.PlayerResult;
 import org.george.item.model.pojo.ItemResult;
-import org.george.pojo.LevelBean;
-import org.george.common.pojo.Message;
-import org.george.common.pojo.Messages;
+import org.george.config.bean.LevelBean;
+import org.george.pojo.Message;
+import org.george.pojo.Messages;
 import org.george.dungeon_game.cache.DungeonGameCache;
 import org.george.dungeon_game.cache.impl.DungeonGameCacheImpl;
 import org.george.dungeon_game.dao.bean.PlayerLevelBean;
@@ -29,13 +27,11 @@ public class DungeonGameCMDs {
 
     private PlayerLevelCache playerLevelCache = PlayerLevelCache.getInstance();
 
-    private PlayerBuyHpRecordCache playerBuyHpRecordCache = PlayerBuyHpRecordCache.getInstance();
-
     private PlayerDGameRecordDao playerDGameRecordDao = PlayerDGameRecordDao.getInstance();
 
     private PlayerModel playerModel = PlayerModel.getInstance();
 
-    private BagModel bagModel = BagModelImpl.getInstance();
+    private BagModel bagModel = BagModel.getInstance();
 
     private ItemModel itemModel = ItemModel.getInstance();
 
@@ -49,6 +45,7 @@ public class DungeonGameCMDs {
      * @return
      */
     public Messages startGame(String...args){
+
 
         String userId = args[0];
         Integer playerId = Integer.parseInt(userId);
@@ -87,8 +84,8 @@ public class DungeonGameCMDs {
                     playerLevelCache.addPlayerLevel(cacheBean);
                 }
 
-                //  通关
                 if(cacheBean.getLevel() == levelInfoConfig.getLevelNum()){
+                    //  通关
                     list.add(new Message(userId, "您已经通关了"));
                     dungeonGameCache.deletePlayer(userId);
                 }else{
@@ -97,12 +94,11 @@ public class DungeonGameCMDs {
                     list.add(new Message(userId, "开始进入地下城闯关"));
 
                     list.add(new Message(userId, playWayInfo()));
-                    LevelBean levelBean = levelInfoConfig.getLevelInfo(cacheBean.getLevel());
+                    LevelBean levelBean = levelInfoConfig.getLevelBean(cacheBean.getLevel());
                     Message message = levelInfo2Message(userId, levelBean);
                     list.add(message);
                 }
             }
-
         }
         return new Messages(list);
     }
@@ -138,7 +134,7 @@ public class DungeonGameCMDs {
                 }
 
                 PlayerResult player = playerModel.getPlayerByPlayerId(playerId);
-                LevelBean levelBeanInfo = levelInfoConfig.getLevelInfo(cacheBean.getLevel());
+                LevelBean levelBeanInfo = levelInfoConfig.getLevelBean(cacheBean.getLevel());
 
                 // 获取游戏结果
                 int result = judge(levelBeanInfo.getWinningRate());
