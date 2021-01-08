@@ -1,12 +1,11 @@
 package org.george.hall.dao.impl;
 
 import com.jfinal.plugin.activerecord.Db;
+
 import com.jfinal.plugin.activerecord.Record;
 import org.george.hall.dao.PlayerDao;
 import org.george.hall.dao.bean.PlayerBean;
 import org.george.util.JFinalUtils;
-
-import java.util.List;
 
 public class PlayerDaoImpl implements PlayerDao {
 
@@ -28,7 +27,6 @@ public class PlayerDaoImpl implements PlayerDao {
             bean.setHp(record.getInt("hp"));
             bean.setGold(record.getInt("gold"));
             bean.setPlayerName(record.getStr("player_name"));
-            bean.setPassword(record.getStr("password"));
         }
         return bean;
     }
@@ -38,9 +36,6 @@ public class PlayerDaoImpl implements PlayerDao {
         Record record = Db.findFirst("select * from player where player_id = ?", bean.getPlayerId());
         if(bean.getPlayerName() != null){
             record.set("player_name", bean.getPlayerName());
-        }
-        if(bean.getPassword() != null){
-            record.set("password", bean.getPassword());
         }
         if(bean.getGold() != null){
             record.set("gold", bean.getGold());
@@ -53,7 +48,7 @@ public class PlayerDaoImpl implements PlayerDao {
 
     @Override
     public void addPlayer(PlayerBean bean) {
-        Record record = new Record().set("player_name", bean.getPlayerName()).set("password", bean.getPassword());
+        Record record = new Record().set("player_name", bean.getPlayerName()).set("player_id", bean.getPlayerId());
         Db.save("player", record);
     }
 
@@ -64,7 +59,7 @@ public class PlayerDaoImpl implements PlayerDao {
 
     @Override
     public PlayerBean loadPlayerByPlayerId(Integer playerId) {
-       Record record = Db.findFirst("select * from player where player_id = ?", playerId);
+        Record record = Db.findFirst("select * from player where player_id = ?", playerId);
         PlayerBean bean = null;
         if(record != null && record.getInt("player_id") != null){
             bean = new PlayerBean();
@@ -72,14 +67,8 @@ public class PlayerDaoImpl implements PlayerDao {
             bean.setHp(record.getInt("hp"));
             bean.setGold(record.getInt("gold"));
             bean.setPlayerName(record.getStr("player_name"));
-            bean.setPassword(record.getStr("password"));
         }
         return bean;
-    }
-
-    @Override
-    public List<Integer> getAllPlayerId() {
-        return Db.query("select player_id from player");
     }
 
     public static void main(String[] args) {

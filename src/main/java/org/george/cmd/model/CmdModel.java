@@ -1,6 +1,6 @@
 package org.george.cmd.model;
 
-import org.george.cmd.model.bean.CmdMessageResult;
+import org.george.cmd.model.pojo.CmdMessageResult;
 import org.george.cmd.model.impl.CmdModelImpl;
 import org.george.config.bean.CmdDescConfigBean;
 

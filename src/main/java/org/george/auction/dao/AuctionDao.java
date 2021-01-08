@@ -1,20 +1,23 @@
 package org.george.auction.dao;
 
-import org.george.auction.pojo.AuctionItem;
+import org.george.auction.dao.bean.AuctionBean;
+import org.george.auction.dao.impl.AuctionDaoImpl;
 
 import java.util.List;
 
 public interface AuctionDao {
 
-    List<AuctionItem> getAuctions();
+    List<AuctionBean> getAuctions();
 
-    void addAuctionItem(Integer itemId, Integer cost,Integer num);
+    void addAuctionItem(Integer itemId, Integer num);
 
-    void updateAuctionItemCost(Integer itemId, Integer cost);
-
-    void updateAuctionItemNum(Integer itemId, Integer num);
+    void updateSelective(AuctionBean bean);
 
     void deleteAuctionItem(Integer itemId);
 
-    AuctionItem getAuction(Integer itemId);
+    AuctionBean getAuction(Integer itemId);
+
+    static AuctionDao getInstance(){
+        return AuctionDaoImpl.getInstance();
+    }
 }

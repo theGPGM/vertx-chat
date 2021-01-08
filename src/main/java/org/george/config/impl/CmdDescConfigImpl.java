@@ -4,9 +4,7 @@ import org.george.config.CmdDescConfig;
 import org.george.config.bean.CmdDescConfigBean;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class CmdDescConfigImpl implements CmdDescConfig {
 

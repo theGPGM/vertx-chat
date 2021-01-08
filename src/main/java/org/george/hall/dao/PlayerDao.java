@@ -1,9 +1,9 @@
 package org.george.hall.dao;
 
 import org.george.hall.dao.bean.PlayerBean;
+
 import org.george.hall.dao.impl.PlayerDaoImpl;
 
-import java.util.List;
 
 public interface PlayerDao {
 
@@ -20,6 +20,4 @@ public interface PlayerDao {
     PlayerBean loadPlayerByPlayerId(Integer playerId);
 
     void deletePlayer(Integer playerId);
-
-    List<Integer> getAllPlayerId();
 }

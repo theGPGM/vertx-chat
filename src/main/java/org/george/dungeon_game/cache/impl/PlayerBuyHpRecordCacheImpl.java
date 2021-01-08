@@ -17,7 +17,7 @@ public class PlayerBuyHpRecordCacheImpl implements PlayerBuyHpRecordCache {
     @Override
     public Integer getBuyHpCount(Integer playerId) {
         Jedis jedis = ThreadLocalJedisUtils.getJedis();
-        String count = jedis.get("player#" + playerId + "buy_hp_count");
+        String count = jedis.get("buy_hp_record#" + playerId);
         if(count == null){
             return null;
         }else{
@@ -28,13 +28,13 @@ public class PlayerBuyHpRecordCacheImpl implements PlayerBuyHpRecordCache {
     @Override
     public void addBuyHpCount(Integer playerId, Long expireTimestamp) {
         Jedis jedis = ThreadLocalJedisUtils.getJedis();
-        jedis.set("player#" + playerId + "buy_hp_count", "0");
-        jedis.expireAt("player#" + playerId + "buy_hp_count", expireTimestamp);
+        jedis.set("buy_hp_record#" + playerId, "0");
+        jedis.expireAt("buy_hp_record#" + playerId, expireTimestamp);
     }
 
     @Override
     public void incrBuyHpCount(Integer playerId) {
         Jedis jedis = ThreadLocalJedisUtils.getJedis();
-        jedis.incr("player#" + playerId + "buy_hp_count");
+        jedis.incr("buy_hp_record#" + playerId);
     }
 }

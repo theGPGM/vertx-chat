@@ -6,11 +6,9 @@ public class LevelBean {
 
     private String levelName;
 
-    private Monster monster;
+    private MonsterBean monsterBean;
 
     private Integer winningRate;
-
-    private Integer DroppingWinItemRate;
 
     public Integer getLevelId() {
         return levelId;
@@ -28,12 +26,12 @@ public class LevelBean {
         this.levelName = levelName;
     }
 
-    public Monster getMonster() {
-        return monster;
+    public MonsterBean getMonsterBean() {
+        return monsterBean;
     }
 
-    public void setMonster(Monster monster) {
-        this.monster = monster;
+    public void setMonsterBean(MonsterBean monsterBean) {
+        this.monsterBean = monsterBean;
     }
 
     public Integer getWinningRate() {
@@ -44,13 +42,6 @@ public class LevelBean {
         this.winningRate = winningRate;
     }
 
-    public Integer getDroppingWinItemRate() {
-        return DroppingWinItemRate;
-    }
-
-    public void setDroppingWinItemRate(Integer droppingWinItemRate) {
-        DroppingWinItemRate = droppingWinItemRate;
-    }
 
     public LevelBean() {
     }
@@ -60,9 +51,8 @@ public class LevelBean {
         return "Level{" +
                 "level=" + levelId +
                 ", levelName='" + levelName + '\'' +
-                ", monster=" + monster +
+                ", monster=" + monsterBean +
                 ", winningRate=" + winningRate +
-                ", DroppingWinItemRate=" + DroppingWinItemRate +
                 '}';
     }
 }

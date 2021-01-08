@@ -1,5 +1,7 @@
 package org.george.item.model.impl;
 
+import org.george.bag.model.BagModel;
+import org.george.bag.model.pojo.PlayerItemResult;
 import org.george.item.cache.ItemCache;
 import org.george.item.cache.bean.ItemCacheBean;
 import org.george.item.dao.ItemDao;
@@ -16,6 +18,8 @@ public class ItemModelImpl implements ItemModel {
     public static ItemModelImpl getInstance(){
         return instance;
     }
+
+    private BagModel bagModel = BagModel.getInstance();
 
     private ItemCache itemCache = ItemCache.getInstance();
 
@@ -54,5 +58,21 @@ public class ItemModelImpl implements ItemModel {
         cacheBean.setItemName(bean.getItemName());
         cacheBean.setDescription(bean.getDescription());
         return cacheBean;
+    }
+
+    @Override
+    public boolean deliveryNotify(Integer playerId, Integer id, Integer num) {
+        PlayerItemResult item = bagModel.getPlayerItem(playerId, id);
+        if(item != null){
+            item.setNum(item.getNum() + num);
+            bagModel.updatePlayerItem(item);
+        }else{
+            item = new PlayerItemResult();
+            item.setPlayerId(playerId);
+            item.setItemId(id);
+            item.setNum(num);
+            bagModel.addPlayerItem(item);
+        }
+        return true;
     }
 }

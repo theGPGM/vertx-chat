@@ -1,23 +1,27 @@
 package org.george.auction.cache;
 
-import org.george.auction.cache.bean.AuctionItemCacheBean;
+import org.george.auction.cache.bean.AuctionCacheBean;
 import org.george.auction.cache.impl.AuctionCacheImpl;
 
 import java.util.List;
 
 public interface AuctionCache {
 
-    List<AuctionItemCacheBean> getAuctions();
+    List<AuctionCacheBean> getAuctions();
 
-    void addAuctionItemCacheBean(AuctionItemCacheBean item);
+    void addAuctionItemCacheBean(AuctionCacheBean item);
 
-    void updateSelective(AuctionItemCacheBean item);
+    void updateSelective(AuctionCacheBean item);
 
     void deleteAuctionItemCacheBean(Integer itemId);
 
-    AuctionItemCacheBean getAuction(Integer itemId);
+    AuctionCacheBean getAuction(Integer itemId);
     
     static AuctionCache getInstance(){
         return AuctionCacheImpl.getInstance();
     }
+
+    boolean timestampExpired();
+
+    void addTimeStamp();
 }

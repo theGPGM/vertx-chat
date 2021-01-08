@@ -3,9 +3,7 @@ package org.george.cmd.cache.impl;
 import org.george.cmd.cache.CmdCache;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class CmdCacheImpl implements CmdCache {

@@ -23,14 +23,14 @@ public class RoomCacheImpl implements RoomCache {
   public void join(String roomId, String userId){
     Jedis jedis = ThreadLocalJedisUtils.getJedis();
     jedis.hset("room#" + roomId, userId, "**");
-    jedis.hset("user_room#" + userId, roomId, "**");
+    jedis.hset("player_room#" + userId, roomId, "**");
   }
 
   @Override
   public void clearUserRoomCache(String userId, String roomId){
     Jedis jedis = ThreadLocalJedisUtils.getJedis();
     jedis.hdel("room#" + roomId, userId);
-    jedis.hdel("user_room#" + userId, roomId);
+    jedis.hdel("player_room#" + userId, roomId);
   }
 
   @Override
@@ -44,7 +44,7 @@ public class RoomCacheImpl implements RoomCache {
   @Override
   public List<String> getUserRoomIds(String userId){
     Jedis jedis = ThreadLocalJedisUtils.getJedis();
-    Set<String> set = jedis.hgetAll("user_room#" + userId).keySet();
+    Set<String> set = jedis.hgetAll("player_room#" + userId).keySet();
     return new ArrayList<>(set);
   }
 

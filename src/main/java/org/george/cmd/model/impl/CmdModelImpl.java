@@ -2,12 +2,12 @@ package org.george.cmd.model.impl;
 
 import org.george.cmd.cache.CmdCache;
 import org.george.cmd.model.CmdModel;
-import org.george.cmd.model.bean.CmdMessageResult;
+import org.george.cmd.model.pojo.CmdMessageResult;
 import org.george.config.bean.CmdDescConfigBean;
+import org.george.hall.model.PlayerModel;
 import org.george.pojo.Message;
 import org.george.pojo.Messages;
 import org.george.config.CmdDescConfig;
-import org.george.hall.model.ClientModel;
 import org.george.util.JedisPool;
 import org.george.util.ThreadLocalJedisUtils;
 import redis.clients.jedis.Jedis;
@@ -24,9 +24,13 @@ public class CmdModelImpl implements CmdModel {
 
     private CmdModelImpl(){}
 
+    public static CmdModelImpl getInstance(){
+        return instance;
+    }
+
     private CmdCache cmdCache = CmdCache.getInstance();
 
-    private ClientModel clientModel = ClientModel.getInstance();
+    private PlayerModel playerModel = PlayerModel.getInstance();
 
     private CmdDescConfig cmdDescConfig = CmdDescConfig.getInstance();
 
@@ -93,10 +97,9 @@ public class CmdModelImpl implements CmdModel {
             Jedis jedis = org.george.util.JedisPool.getJedis();
             ThreadLocalJedisUtils.addJedis(jedis);
             try{
-                // 登录
-                if("login".equals(cmd) || "register".equals(cmd)){
+                 if("login".equals(cmd) || "register".equals(cmd)){
 
-                    if(clientModel.getUserIdByHId(hId) != null){
+                    if(playerModel.getUId(hId) != null){
                         list.add(new CmdMessageResult(hId, "请勿重复登录"));
                     }else{
                         String[] params = new String[strs.length - 1];
@@ -107,25 +110,44 @@ public class CmdModelImpl implements CmdModel {
                         String userId = msg.getSendToUser();
 
                         if(userId == null) {
+                            // 登录失败
                             list.add(new CmdMessageResult(hId, msg.getMessage()));
-                        }else if(clientModel.getHIdByUserId(userId) != null){
+                            return list;
+                        }
+
+                        // 认证成功
+                        if(playerModel.getHId(userId) != null){
                             // 账户异地登录
-                            String userHId = clientModel.getHIdByUserId(userId);
-                            clientModel.logout(userId);
+                            String userHId = playerModel.getHId(userId);
+                            playerModel.logout(userId);
                             list.add(new CmdMessageResult(userHId, "账户异地登录"));
                             list.add(new CmdMessageResult(hId, msg.getMessage()));
-                            clientModel.addUserIdHId(userId, hId);
+                            playerModel.addUIdAndHId(userId, hId);
                         }else{
-                            // 正常登录
-                            clientModel.addUserIdHId(userId, hId);
+                            playerModel.addUIdAndHId(userId, hId);
                             list.add(new CmdMessageResult(hId, msg.getMessage()));
                         }
                     }
-                } else if(clientModel.getUserIdByHId(hId) == null){
+                } else if(playerModel.getUId(hId) == null){
                     // 权限校验
                     list.add(new CmdMessageResult(hId, "当前操作需登录"));
-                } else{
-                    String userId =  clientModel.getUserIdByHId(hId);
+                } else if(cmd.equals("cmd")) {
+                     StringBuilder sb = new StringBuilder();
+                     sb.append("============================================================\r\n")
+                             .append("以下为全部命令:\r\n")
+                             .append("============================================================\r\n");
+                     for(CmdDescConfigBean bean : getCmdDescriptions()){
+                         sb.append(bean.getDesc());
+                         sb.append("\r\n");
+                     }
+                     sb.append("============================================================");
+                     list.add(new CmdMessageResult(hId, sb.toString()));
+                 }
+                 else if(method == null || cmdObj == null){
+                     // 没有的命令
+                     list.add(new CmdMessageResult(hId, "无此命令"));
+                 } else{
+                    String userId =  playerModel.getUId(hId);
                     String [] params = new String[strs.length];
                     System.arraycopy(strs, 1, params, 1, strs.length - 1);
                     params[0] = userId;
@@ -135,7 +157,7 @@ public class CmdModelImpl implements CmdModel {
                         if(msg.getSendToUser() == null){
                             list.add(new CmdMessageResult(hId, msg.getMessage()));
                         }else{
-                            list.add(new CmdMessageResult(clientModel.getHIdByUserId(msg.getSendToUser()), msg.getMessage()));
+                            list.add(new CmdMessageResult(playerModel.getHId(msg.getSendToUser()), msg.getMessage()));
                         }
                     }
                 }
@@ -153,9 +175,5 @@ public class CmdModelImpl implements CmdModel {
     @Override
     public List<CmdDescConfigBean> getCmdDescriptions() {
         return cmdDescConfig.getAllCmdDescriptionBeans();
-    }
-
-    public static CmdModelImpl getInstance(){
-        return instance;
     }
 }

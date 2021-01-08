@@ -1,5 +1,7 @@
 package org.george.dungeon_game.cache;
 
+import org.george.dungeon_game.cache.impl.DungeonGameCacheImpl;
+
 public interface DungeonGameCache {
 
     /**
@@ -25,4 +27,8 @@ public interface DungeonGameCache {
     Integer getBuyHpCount(Integer playerId);
 
     void incrBuyHpCount(Integer playerId);
+
+    static DungeonGameCache getInstance(){
+        return DungeonGameCacheImpl.getInstance();
+    }
 }

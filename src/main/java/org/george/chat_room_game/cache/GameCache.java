@@ -17,7 +17,7 @@ public interface GameCache {
      * @param roomId
      * @return
      */
-    List<String> getPlayUserList(String roomId);
+    List<String> getAllPlayerInRoom(String roomId);
 
     /**
      * 查看房间中是否在玩游戏
@@ -32,7 +32,7 @@ public interface GameCache {
      * @param userId
      * @param action
      */
-    void addUserAction(String roomId, String userId, String action);
+    void addUserAction(String roomId, String userId, String action, Integer expireSecond);
 
     /**
      * 获取玩家猜拳的内容
@@ -45,7 +45,7 @@ public interface GameCache {
      * 删除房间
      * @param roomId
      */
-    void removeRoom(String roomId);
+    void clearCache(String roomId);
 
     /**
      * 获得用户出拳内容
@@ -54,4 +54,10 @@ public interface GameCache {
      * @return
      */
     String getUserAction(String roomId, String userId);
+
+    void createGame(String roomId, String userId, Integer expireSecond);
+
+    void addWaitingTime(String roomId, Integer expireSecond);
+
+    boolean existsWaitingTime(String roomId);
 }

@@ -5,7 +5,7 @@ import org.george.bag.cache.bean.PlayerItemCacheBean;
 import org.george.bag.dao.BagDao;
 import org.george.bag.dao.bean.PlayerItemBean;
 import org.george.bag.model.BagModel;
-import org.george.bag.model.bean.PlayerItemResult;
+import org.george.bag.model.pojo.PlayerItemResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,6 +64,9 @@ public class BagModelImpl implements BagModel {
         PlayerItemCacheBean cacheBean = bagCache.getPlayerItem(playerId, itemId);
         if(cacheBean == null){
             PlayerItemBean bean = bagDao.getPlayerItem(playerId, itemId);
+            if(bean == null){
+                return null;
+            }
             cacheBean = playerItemBean2CacheBean(bean);
             bagCache.addPlayerItem(cacheBean);
         }

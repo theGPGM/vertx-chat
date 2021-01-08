@@ -1,24 +1,38 @@
 package org.george;
 
 import io.vertx.core.AbstractVerticle;
+
+
 import io.vertx.core.Vertx;
 import io.vertx.core.net.NetServer;
+import org.george.auction.DeductionHandler;
+import org.george.auction.DeliveryHandler;
+import org.george.chat.model.ChatRoomModel;
 import org.george.cmd.model.CmdModel;
-import org.george.cmd.model.bean.CmdMessageResult;
+import org.george.cmd.model.pojo.CmdMessageResult;
+import org.george.config.AuctionConfig;
+import org.george.config.DropItemConfig;
+import org.george.config.ItemConfig;
 import org.george.config.LevelInfoConfig;
-import org.george.config.bean.CmdDescConfigBean;
 import org.george.dungeon_game.model.DungeonGameModel;
 import org.george.hall.ClientCloseHandler;
 import org.george.hall.model.ClientModel;
-import org.george.hall.model.impl.ClientModelImpl;
-import org.george.util.JFinalUtils;
-import org.george.util.MessageOuter;
-import org.george.util.PropertiesUtils;
+import org.george.hall.model.PlayerModel;
+import org.george.item.model.ItemModel;
+import org.george.pojo.AuctionTypeEnum;
+import org.george.pojo.DeductionTypeEnum;
+
+
+import org.george.util.*;
+import redis.clients.jedis.Jedis;
+
 import java.util.*;
 
 public class Main extends AbstractVerticle {
 
-  private ClientModel clientModel = ClientModelImpl.getInstance();
+  private ClientModel clientModel = ClientModel.getInstance();
+
+  private PlayerModel playerModel = PlayerModel.getInstance();
 
   private DungeonGameModel dungeonGameModel = DungeonGameModel.getInstance();
 
@@ -26,7 +40,15 @@ public class Main extends AbstractVerticle {
 
   private CmdModel cmdModel = CmdModel.getInstance();
 
+  private ItemConfig itemConfig = ItemConfig.getInstance();
+
   private LevelInfoConfig levelInfoConfig = LevelInfoConfig.getInstance();
+
+  private DropItemConfig dropItemConfig = DropItemConfig.getInstance();
+
+  private AuctionConfig auctionConfig = AuctionConfig.getInstance();
+
+  private ChatRoomModel roomModel = ChatRoomModel.getInstance();
 
   public static void main(String[] args) {
     Vertx.vertx().deployVerticle(new Main());
@@ -35,18 +57,43 @@ public class Main extends AbstractVerticle {
   @Override
   public void start(){
 
-    messageOuter.addVertx(vertx);
-
-    // 加载配置
     vertx.executeBlocking(promise -> {
+
+      // 初始化消息传递类
+      messageOuter.addVertx(vertx);
+
+      // 预加载 JFinal 的配置
       JFinalUtils.initJFinalConfig();
+
+      // 将所有与 cmd 相关的数据加载到内存中
       cmdModel.loadCmdDescriptionProperties(PropertiesUtils.loadProperties("src/main/resources/conf/description.properties"));
       cmdModel.loadCmdProperties(PropertiesUtils.loadProperties("src/main/resources/conf/cmds.properties"));
-      levelInfoConfig.loadLevelInfo("src/main/resources/csv/level.csv");
 
-      // 观察者模式，添加客户端关闭事件观察者
+      // 观察者模式，添加客户端关闭事件观察者，用于在客户端强制关闭时，清除缓存
+      ClientCloseHandler.addObserver(roomModel);
       ClientCloseHandler.addObserver(dungeonGameModel);
+      ClientCloseHandler.addObserver(playerModel);
       ClientCloseHandler.addObserver(clientModel);
+
+      // 加载游戏信息
+      itemConfig.loadItemInfo("src/main/resources/csv/item.csv");
+      levelInfoConfig.loadLevelInfo("src/main/resources/csv/level.csv");
+      dropItemConfig.loadFile("src/main/resources/csv/drop_item.csv");
+
+      // 加载拍卖行物品信息
+      auctionConfig.loadAuctionInfo("src/main/resources/csv/auction.csv");
+
+      // 观察者模式，添加货币扣减事件观察者，用于金币等货币单位的扣减
+      DeductionHandler.addObserver(DeductionTypeEnum.GOLD.getType(), PlayerModel.getInstance());
+
+      // 观察者模式，添加货物派发事件观察者，用于道具等物品的派发
+      DeliveryHandler.addObserver(AuctionTypeEnum.Item.getType(), ItemModel.getInstance());
+    }, res -> {
+      // 预加载错误就无法启动服务器
+      if(res.failed()){
+        res.cause().printStackTrace();
+        System.exit(-1);
+      }
     });
 
     // 监听连接
@@ -55,23 +102,33 @@ public class Main extends AbstractVerticle {
       String hId = handler.writeHandlerID();
       clientModel.addClient(hId,handler);
       welCome(hId);
+      StringBuilder sb = new StringBuilder();
       handler.handler(buff -> {
-        // 进入 worker 线程
-        vertx.executeBlocking(promise -> {
-          String cmd = buff.toString("GBK");
-          List<CmdMessageResult> list = cmdModel.execute(hId, cmd);
-          for(CmdMessageResult msg : list){
-            messageOuter.out(msg.getMessage(), msg.gethId());
-          }
-        }, res -> {
-          res.cause().printStackTrace();
-        });
+        // 监控客户端按下回车键
+        if(buff.toString().equals("\r\n")){
+          vertx.executeBlocking(promise -> {
+            // 进入 worker 线程
+            List<CmdMessageResult> list = cmdModel.execute(hId, sb.toString());
+            for(CmdMessageResult msg : list){
+              messageOuter.out(msg.getMessage(), msg.gethId());
+            }
+            sb.delete(0, sb.length());
+          }, res -> {
+            if(res.failed()){
+              res.cause().printStackTrace();
+            }
+          });
+        }else{
+          sb.append(buff.toString());
+        }
       });
 
-      // 客户端直接退出时，清除缓存
       handler.closeHandler(fun -> {
         vertx.executeBlocking(promise -> {
+          Jedis jedis = JedisPool.getJedis();
+          ThreadLocalJedisUtils.addJedis(jedis);
           ClientCloseHandler.notify(hId);
+          JedisPool.returnJedis(jedis);
         });
       });
     });
@@ -82,14 +139,12 @@ public class Main extends AbstractVerticle {
 
   private void welCome(String hId){
     StringBuilder sb = new StringBuilder();
-    sb.append("欢迎登录,您可以使用以下命令\r\n");
-    int i = 1;
-    for(CmdDescConfigBean bean : cmdModel.getCmdDescriptions()){
-      sb.append(bean.getCmd());
-      sb.append(":");
-      sb.append(bean.getDesc());
-      sb.append("\r\n");
-    }
+    sb.append("============================================================\r\n")
+            .append("欢迎进入,您可以使用以下命令:\r\n")
+            .append("============================================================\r\n")
+            .append("[login:username:password]:登录\r\n")
+            .append("[register:username:password]:注册\r\n")
+            .append("============================================================");
     messageOuter.out(sb.toString(), hId);
   }
 }

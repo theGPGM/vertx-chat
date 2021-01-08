@@ -55,7 +55,7 @@ public class BagDaoImpl implements BagDao {
     @Override
     public PlayerItemBean getPlayerItem(Integer playerId, Integer itemId) {
         PlayerItemBean bean = null;
-        Record record = Db.findFirst("delete from player_item where player_id = ? and item_id = ?", playerId, itemId);
+        Record record = Db.findFirst("select * from player_item where player_id = ? and item_id = ?", playerId, itemId);
         if(record != null){
             bean = new PlayerItemBean();
             bean.setItemId(record.getInt("item_id"));

@@ -2,6 +2,8 @@ package org.george.pojo;
 
 public class CSVFormatException extends RuntimeException {
 
+	private static final long serialVersionUID = 1l;
+	
     public CSVFormatException() {
         super();
     }

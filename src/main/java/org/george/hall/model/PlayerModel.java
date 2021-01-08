@@ -1,11 +1,11 @@
 package org.george.hall.model;
 
+import org.george.auction.DeductionObserver;
+import org.george.hall.ClientCloseEventObserver;
 import org.george.hall.model.impl.PlayerModelImpl;
 import org.george.hall.model.pojo.PlayerResult;
 
-import java.util.List;
-
-public interface PlayerModel {
+public interface PlayerModel extends DeductionObserver, ClientCloseEventObserver {
 
     String getPlayerNameByPlayerId(String userId);
 
@@ -15,14 +15,20 @@ public interface PlayerModel {
 
     void updatePlayerGold(Integer playerId, Integer gold);
 
-    List<Integer> getAllPlayerId();
-
     /**
      * 获取触发一次更新
      * @param playerId
      * @return
      */
-    Integer getPlayerHP(Integer playerId);
+    Integer getPlayerCurrentHP(Integer playerId);
+
+    String getUId(String hId);
+
+    String getHId(String userId);
+
+    void addUIdAndHId(String userId, String hId);
+
+    void logout(String userId);
 
     static PlayerModel getInstance(){
         return PlayerModelImpl.getInstance();

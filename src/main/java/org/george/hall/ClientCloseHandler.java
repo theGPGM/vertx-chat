@@ -13,7 +13,7 @@ public class ClientCloseHandler {
 
     public static void notify(String hId){
         for(ClientCloseEventObserver observer : list){
-            observer.update(hId);
+            observer.clientCloseNotify(hId);
         }
     }
 }

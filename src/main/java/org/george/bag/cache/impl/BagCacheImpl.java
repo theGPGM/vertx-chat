@@ -39,14 +39,14 @@ public class BagCacheImpl implements BagCache {
     public void addPlayerItem(PlayerItemCacheBean item) {
         // 添加道具数据
         Jedis jedis = ThreadLocalJedisUtils.getJedis();
-        jedis.hset("player#"+ item.getPlayerId() + "_items", String.valueOf(item.getItemId()), String.valueOf(item.getNum()));
+        jedis.hset("player_items#"+ item.getPlayerId(), String.valueOf(item.getItemId()), String.valueOf(item.getNum()));
     }
 
     @Override
     public void updatePlayerItem(PlayerItemCacheBean item) {
         // 添加道具数据
         Jedis jedis = ThreadLocalJedisUtils.getJedis();
-        jedis.hset("player#"+ item.getPlayerId() + "_items", String.valueOf(item.getItemId()), String.valueOf(item.getNum()));
+        jedis.hset("player_items#"+ item.getPlayerId(), String.valueOf(item.getItemId()), String.valueOf(item.getNum()));
     }
 
     @Override

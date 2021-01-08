@@ -20,6 +20,7 @@ public class MessageOuter {
   }
 
   public void out(String msg, String hId){
-    this.vertx.eventBus().send(hId, Buffer.buffer(msg + "\r\n", "GBK"));
+    if(hId != null)
+      this.vertx.eventBus().send(hId, Buffer.buffer(msg + "\r\n", "GBK"));
   }
 }

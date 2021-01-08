@@ -6,8 +6,6 @@ public class PlayerCacheBean {
 
     private String playerName;
 
-    private String password;
-
     private Integer hp;
 
     private Integer gold;
@@ -28,13 +26,6 @@ public class PlayerCacheBean {
         this.playerName = playerName;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
 
     public Integer getHp() {
         return hp;
@@ -57,7 +48,6 @@ public class PlayerCacheBean {
         return "PlayerCacheBean{" +
                 "playerId=" + playerId +
                 ", playerName='" + playerName + '\'' +
-                ", password='" + password + '\'' +
                 ", hp=" + hp +
                 ", gold=" + gold +
                 '}';

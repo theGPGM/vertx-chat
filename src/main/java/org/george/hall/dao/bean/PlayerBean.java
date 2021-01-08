@@ -6,8 +6,6 @@ public class PlayerBean {
 
     private String playerName;
 
-    private String password;
-
     private Integer hp;
 
     private Integer gold;
@@ -26,14 +24,6 @@ public class PlayerBean {
 
     public void setPlayerName(String playerName) {
         this.playerName = playerName;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public Integer getHp() {
@@ -57,7 +47,6 @@ public class PlayerBean {
         return "PlayerBean{" +
                 "playerId=" + playerId +
                 ", playerName='" + playerName + '\'' +
-                ", password='" + password + '\'' +
                 ", hp=" + hp +
                 ", gold=" + gold +
                 '}';

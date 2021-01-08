@@ -10,10 +10,6 @@ public class ClientModelImpl implements ClientModel {
 
   Map<String, NetSocket> clientMap = new HashMap<>();
 
-  Map<String, String> userIdHIdMap = new HashMap<>();
-
-  Map<String, String> hIdUserIdMap = new HashMap<>();
-
   private ClientModelImpl(){}
 
   private static ClientModelImpl client = new ClientModelImpl();
@@ -23,7 +19,7 @@ public class ClientModelImpl implements ClientModel {
   }
 
   @Override
-  public void clientClosed(String hId) {
+  public void close(String hId) {
     NetSocket netSocket = clientMap.get(hId);
     if(netSocket != null)
       netSocket.close();
@@ -31,42 +27,12 @@ public class ClientModelImpl implements ClientModel {
   }
 
   @Override
-  public String getUserIdByHId(String hId) {
-    return hIdUserIdMap.get(hId);
-  }
-
-  @Override
-  public String getHIdByUserId(String userId) {
-    return userIdHIdMap.get(userId);
-  }
-
-  @Override
-  public void addUserIdHId(String userId, String hId) {
-    hIdUserIdMap.put(hId, userId);
-    userIdHIdMap.put(userId, hId);
-  }
-
-  @Override
-  public void logout(String userId) {
-    String hId = userIdHIdMap.get(userId);
-    if(hId != null){
-      hIdUserIdMap.remove(hId);
-    }
-    userIdHIdMap.remove(userId);
-  }
-
-  @Override
   public void addClient(String HId, NetSocket socket){
     clientMap.put(HId, socket);
   }
 
-
   @Override
-  public void update(String hId) {
-    clientClosed(hId);
-    String userId = getUserIdByHId(hId);
-    if(userId != null){
-      logout(userId);
-    }
+  public void clientCloseNotify(String hId) {
+    clientMap.remove(hId);
   }
 }

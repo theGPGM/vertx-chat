@@ -1,9 +1,10 @@
 package org.george.chat.model.impl;
 
 import org.george.chat.cache.RoomCache;
+
 import org.george.chat.cache.impl.RoomCacheImpl;
 import org.george.chat.model.ChatRoomModel;
-
+import org.george.hall.model.PlayerModel;
 import java.util.List;
 
 
@@ -16,6 +17,8 @@ public class ChatRoomModelImpl implements ChatRoomModel {
   }
 
   private RoomCache roomCache = RoomCacheImpl.getInstance();
+
+  private PlayerModel playerModel = PlayerModel.getInstance();
   
   private ChatRoomModelImpl(){}
 
@@ -27,5 +30,14 @@ public class ChatRoomModelImpl implements ChatRoomModel {
   @Override
   public boolean existChatRoom(String roomId) {
     return roomCache.existsRoom(roomId);
+  }
+
+  @Override
+  public void clientCloseNotify(String hId) {
+    String userId = playerModel.getUId(hId);
+    List<String> roomIds = roomCache.getUserRoomIds(userId);
+    for(String roomId : roomIds){
+      roomCache.clearUserRoomCache(userId, roomId);
+    }
   }
 }

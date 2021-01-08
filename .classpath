@@ -11,6 +11,11 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry excluding="**" kind="src" output="target/classes" path="src/main/resources">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="src" output="target/test-classes" path="src/test/java">
 		<attributes>
 			<attribute name="optional" value="true"/>
@@ -18,11 +23,7 @@
 			<attribute name="test" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry excluding="**" kind="src" output="target/classes" path="src/main/resources">
-		<attributes>
-			<attribute name="maven.pomderived" value="true"/>
-		</attributes>
-	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/target"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: io.vertx:vertx-core:4.0.0"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: io.netty:netty-common:4.1.49.Final"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: io.netty:netty-buffer:4.1.49.Final"/>
@@ -51,6 +52,9 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: com.mchange:c3p0:0.9.5.4"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: com.mchange:mchange-commons-java:0.2.15"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: com.zaxxer:HikariCP-java7:2.4.13"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: com.jfinal:activerecord:4.9.03"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: com.alibaba:druid:1.2.4"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: javax.annotation:javax.annotation-api:1.3.2"/>
 	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>
