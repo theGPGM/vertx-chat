@@ -2,25 +2,25 @@ package org.george.dungeon_game.cmd;
 
 import org.george.bag.model.BagModel;
 import org.george.bag.model.pojo.PlayerItemResult;
-import org.george.config.DropItemConfig;
-import org.george.config.ItemConfig;
-import org.george.config.LevelInfoConfig;
-import org.george.config.bean.DropItemInfoBean;
-import org.george.config.bean.ItemInfoBean;
 import org.george.dungeon_game.cache.PlayerLevelCache;
 import org.george.dungeon_game.cache.bean.PlayerLevelCacheBean;
+import org.george.dungeon_game.config.DropItemConfig;
+import org.george.dungeon_game.config.ItemConfig;
+import org.george.dungeon_game.config.LevelInfoConfig;
+import org.george.dungeon_game.config.bean.DropItemInfoBean;
+import org.george.dungeon_game.config.bean.ItemInfoBean;
+import org.george.dungeon_game.config.bean.LevelBean;
+import org.george.dungeon_game.util.JedisPool;
+import org.george.dungeon_game.util.NumUtils;
+import org.george.dungeon_game.util.ThreadLocalJedisUtils;
 import org.george.hall.model.pojo.PlayerResult;
 import org.george.item.model.pojo.ItemResult;
-import org.george.config.bean.LevelBean;
 import org.george.core.pojo.Message;
 import org.george.core.pojo.Messages;
 import org.george.dungeon_game.cache.DungeonGameCache;
 import org.george.dungeon_game.dao.bean.PlayerLevelBean;
 import org.george.hall.model.PlayerModel;
 import org.george.item.model.ItemModel;
-import org.george.util.JedisPool;
-import org.george.util.NumUtils;
-import org.george.util.ThreadLocalJedisUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
@@ -134,6 +134,7 @@ public class DungeonGameCMDs {
                 // 获取玩家关卡信息
                 PlayerLevelCacheBean cacheBean = playerLevelCache.getPlayerLevelByPlayerId(playerId);
                 if(cacheBean == null){
+                    cacheBean = new PlayerLevelCacheBean();
                     cacheBean.setPlayerId(playerId);
                     cacheBean.setLoseCount(0);
                     cacheBean.setLevel(0);
@@ -487,7 +488,11 @@ public class DungeonGameCMDs {
     }
 
     private boolean isClear(Integer playerId){
-        return playerLevelCache.getPlayerLevelByPlayerId(playerId).getLevel() == levelInfoConfig.getLevelNum();
+        PlayerLevelCacheBean cacheBean = playerLevelCache.getPlayerLevelByPlayerId(playerId);
+        if(cacheBean == null){
+            return false;
+        }
+        return cacheBean.getLevel() == levelInfoConfig.getLevelNum();
     }
 
     private boolean isReachBuyHpLimit(Integer playerId){

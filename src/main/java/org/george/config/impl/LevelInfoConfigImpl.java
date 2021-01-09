@@ -1,9 +1,9 @@
 package org.george.config.impl;
 
-import org.george.config.LevelInfoConfig;
-import org.george.config.bean.LevelBean;
-import org.george.config.bean.MonsterBean;
-import org.george.pojo.CSVFormatException;
+import org.george.dungeon_game.config.LevelInfoConfig;
+import org.george.dungeon_game.config.bean.LevelBean;
+import org.george.dungeon_game.config.bean.MonsterBean;
+import org.george.dungeon_game.pojo.CSVFormatException;
 import org.george.util.NumUtils;
 
 import java.io.*;
@@ -14,15 +14,15 @@ import java.util.Set;
 
 public class LevelInfoConfigImpl implements LevelInfoConfig {
 
-    Map<Integer, LevelBean> levelBeanMap = new HashMap<>();
+    private static Map<Integer, LevelBean> levelBeanMap = new HashMap<>();
 
-    Set<Integer> monsterIdSet = new HashSet<>();
+    private static Set<Integer> monsterIdSet = new HashSet<>();
 
-    Set<Integer> levelSet = new HashSet<>();
+    private static Set<Integer> levelSet = new HashSet<>();
 
-    Set<String> levelNameSet = new HashSet<>();
+    private static Set<String> levelNameSet = new HashSet<>();
 
-    Set<String> monsterNameSet = new HashSet<>();
+    private static Set<String> monsterNameSet = new HashSet<>();
 
     private LevelInfoConfigImpl(){}
 
@@ -32,9 +32,9 @@ public class LevelInfoConfigImpl implements LevelInfoConfig {
         return instance;
     }
 
-    @Override
-    public void loadLevelInfo(String filename) {
-        File file = new File(filename);
+
+    static{
+        File file = new File("src/main/java/org/george/dungeon_game/config/csv/level.csv");
         if(file == null || !file.isFile()){
             throw new CSVFormatException("文件错误");
         }

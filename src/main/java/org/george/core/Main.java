@@ -11,9 +11,6 @@ import org.george.chat.model.ChatRoomModel;
 import org.george.cmd.model.CmdModel;
 import org.george.cmd.model.pojo.CmdMessageResult;
 import org.george.config.AuctionConfig;
-import org.george.config.DropItemConfig;
-import org.george.config.ItemConfig;
-import org.george.config.LevelInfoConfig;
 import org.george.dungeon_game.model.DungeonGameModel;
 import org.george.hall.ClientCloseHandler;
 import org.george.hall.model.ClientModel;
@@ -39,12 +36,6 @@ public class Main extends AbstractVerticle {
   private MessageOuter messageOuter = MessageOuter.getInstance();
 
   private CmdModel cmdModel = CmdModel.getInstance();
-
-  private ItemConfig itemConfig = ItemConfig.getInstance();
-
-  private LevelInfoConfig levelInfoConfig = LevelInfoConfig.getInstance();
-
-  private DropItemConfig dropItemConfig = DropItemConfig.getInstance();
 
   private AuctionConfig auctionConfig = AuctionConfig.getInstance();
 
@@ -74,14 +65,6 @@ public class Main extends AbstractVerticle {
       ClientCloseHandler.addObserver(dungeonGameModel);
       ClientCloseHandler.addObserver(playerModel);
       ClientCloseHandler.addObserver(clientModel);
-
-      // 加载游戏信息
-      itemConfig.loadItemInfo("src/main/resources/csv/item.csv");
-      levelInfoConfig.loadLevelInfo("src/main/resources/csv/level.csv");
-      dropItemConfig.loadFile("src/main/resources/csv/drop_item.csv");
-
-      // 加载拍卖行物品信息
-      auctionConfig.loadAuctionInfo("src/main/resources/csv/auction.csv");
 
       // 观察者模式，添加货币扣减事件观察者，用于金币等货币单位的扣减
       DeductionHandler.addObserver(DeductionTypeEnum.GOLD.getType(), PlayerModel.getInstance());
