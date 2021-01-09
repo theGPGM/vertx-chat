@@ -10,9 +10,9 @@ import org.george.config.AuctionConfig;
 import org.george.config.bean.AuctionInfoBean;
 import org.george.hall.model.pojo.PlayerResult;
 import org.george.item.model.ItemModel;
-import org.george.pojo.DeductionTypeEnum;
-import org.george.pojo.Message;
-import org.george.pojo.Messages;
+import org.george.auction.pojo.DeductionTypeEnum;
+import org.george.core.pojo.Message;
+import org.george.core.pojo.Messages;
 import org.george.item.model.pojo.ItemResult;
 import org.george.util.NumUtils;
 import org.george.util.RedisLockUtils;
@@ -20,6 +20,7 @@ import org.george.hall.model.PlayerModel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AuctionCmds {
@@ -47,34 +48,47 @@ public class AuctionCmds {
         String userId = args[0];
         if(args.length != 3){
             list.add(new Message(userId, "输入格式错误"));
+        }else if(!NumUtils.checkDigit(args[1]) || !NumUtils.checkDigit(args[2])){
+            list.add(new Message(userId, "输入格式错误"));
         }else{
-            if(!NumUtils.checkDigit(args[1]) || !NumUtils.checkDigit(args[2])){
-                list.add(new Message(userId, "输入格式错误"));
-            }else{
-                // 判断是否需要先刷新商店
-                if(auctionCache.timestampExpired()){
-                    if(flag.compareAndSet(false, true)){
+            // 判断是否需要先刷新商店
+            if(auctionCache.timestampExpired()){
+                if(flag.compareAndSet(false, true)){
 
-                        // 刷新商店
-                        refreshShop();
+                    // 刷新商店
+                    refreshShop();
 
-                        // 添加时间戳
-                        auctionCache.addTimeStamp();
-                        flag.set(false);
-                    }else{
-                        list.add(new Message(userId, "拍卖行正在刷新中，请稍后再试"));
-                        return new Messages(list);
-                    }
+                    // 添加时间戳
+                    auctionCache.addTimeStamp();
+                    flag.set(false);
+                }else{
+                    list.add(new Message(userId, "拍卖行正在刷新中，请稍后再试"));
+                    return new Messages(list);
                 }
+            }
 
-                Integer auctionId = Integer.parseInt(args[1]);
-                Integer buyNum = Integer.parseInt(args[2]);
-                AuctionCacheBean auctionCacheBean = auctionCache.getAuction(auctionId);
-                PlayerResult player = playerModel.getPlayerByPlayerId(Integer.parseInt(userId));
+            String requestId = UUID.randomUUID().toString();
+            int count = 0;
+            boolean locked = false;
+            while(true){
+                // 加锁，10 秒过期
+                locked = RedisLockUtils.tryLock("buy_auction", requestId, 10);
+                if(locked){
+                    break;
+                }
+                // 尝试 10 次
+                if(count > 10){
+                    break;
+                }
+                count++;
+            }
 
+            if(locked){
                 try{
-                    // 购买加分布式锁，10 秒过期
-                    RedisLockUtils.tryLock("buy_auction", 10);
+                    Integer auctionId = Integer.parseInt(args[1]);
+                    Integer buyNum = Integer.parseInt(args[2]);
+                    AuctionCacheBean auctionCacheBean = auctionCache.getAuction(auctionId);
+                    PlayerResult player = playerModel.getPlayerByPlayerId(Integer.parseInt(userId));
 
                     if(buyNum <= 0){
                         list.add(new Message(userId, "输入格式错误"));
@@ -106,8 +120,10 @@ public class AuctionCmds {
                     }
                 }finally {
                     // 解锁
-                    RedisLockUtils.releaseLock("buy_auction");
+                    RedisLockUtils.releaseLock("buy_auction", requestId);
                 }
+            }else{
+                list.add(new Message(userId, "系统繁忙，请稍候重试"));
             }
         }
         return new Messages(list);

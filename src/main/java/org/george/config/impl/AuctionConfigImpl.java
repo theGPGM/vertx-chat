@@ -3,9 +3,9 @@ package org.george.config.impl;
 import org.george.config.AuctionConfig;
 import org.george.config.ItemConfig;
 import org.george.config.bean.AuctionInfoBean;
-import org.george.pojo.AuctionTypeEnum;
+import org.george.auction.pojo.AuctionTypeEnum;
 import org.george.pojo.CSVFormatException;
-import org.george.pojo.DeductionTypeEnum;
+import org.george.auction.pojo.DeductionTypeEnum;
 import org.george.util.NumUtils;
 
 import java.io.*;

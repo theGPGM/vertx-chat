@@ -9,17 +9,21 @@ import org.george.config.bean.DropItemInfoBean;
 import org.george.config.bean.ItemInfoBean;
 import org.george.dungeon_game.cache.PlayerLevelCache;
 import org.george.dungeon_game.cache.bean.PlayerLevelCacheBean;
-import org.george.dungeon_game.dao.PlayerLevelDao;
 import org.george.hall.model.pojo.PlayerResult;
 import org.george.item.model.pojo.ItemResult;
 import org.george.config.bean.LevelBean;
-import org.george.pojo.Message;
-import org.george.pojo.Messages;
+import org.george.core.pojo.Message;
+import org.george.core.pojo.Messages;
 import org.george.dungeon_game.cache.DungeonGameCache;
 import org.george.dungeon_game.dao.bean.PlayerLevelBean;
 import org.george.hall.model.PlayerModel;
 import org.george.item.model.ItemModel;
+import org.george.util.JedisPool;
 import org.george.util.NumUtils;
+import org.george.util.ThreadLocalJedisUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,8 +34,6 @@ public class DungeonGameCMDs {
     private DungeonGameCache dungeonGameCache = DungeonGameCache.getInstance();
 
     private PlayerLevelCache playerLevelCache = PlayerLevelCache.getInstance();
-
-    private PlayerLevelDao playerLevelDao = PlayerLevelDao.getInstance();
 
     private PlayerModel playerModel = PlayerModel.getInstance();
 
@@ -46,6 +48,8 @@ public class DungeonGameCMDs {
     private ItemConfig itemConfig = ItemConfig.getInstance();
 
     private Random rand = new Random();
+
+    private Logger logger = LoggerFactory.getLogger(DungeonGameCMDs.class);
 
     private static final String not_at_game = "未处于游戏状态";
 
@@ -95,7 +99,7 @@ public class DungeonGameCMDs {
 
     private static final String item_must_use_at_game = "道具需要在游戏中才能使用";
 
-    private static final String unexpected_error_happened = "发生未知异常";
+    private static final String item_not_exists = "道具不存在";
 
     private static final Integer must_win_lose_count = 10;
 
@@ -105,54 +109,51 @@ public class DungeonGameCMDs {
      * @return
      */
     public Messages startGame(String...args){
-
-
-        String userId = args[0];
-        Integer playerId = Integer.parseInt(userId);
         List<Message> list = new ArrayList<>();
 
-        if(args.length > 1){
-            list.add(new Message(userId, input_format_error));
-        }else if(dungeonGameCache.playerAtGame(userId)){
-            list.add(new Message(userId, at_game));
-        }
-        else{
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try{
 
-            // 检测玩家体力
-            int hp = playerModel.getPlayerCurrentHP(Integer.parseInt(userId));
-            if (hp == 0) {
+            String userId = args[0];
+            Integer playerId = Integer.parseInt(userId);
+            if(args.length > 1){
+                list.add(new Message(userId, input_format_error));
+            } else if(dungeonGameCache.playerAtGame(userId)){
+                list.add(new Message(userId, at_game));
+            } else if(!isEnoughHp(playerId)){
+                // 体力不足
                 list.add(new Message(userId, hp_0));
-            }else{
+            } else if(isClear(playerId)){
+                // 已经通关
+                list.add(new Message(userId, already_clear));
+            } else{
+
                 // 添加玩家
                 dungeonGameCache.addPlayer(userId);
                 // 获取玩家关卡信息
                 PlayerLevelCacheBean cacheBean = playerLevelCache.getPlayerLevelByPlayerId(playerId);
                 if(cacheBean == null){
-                    PlayerLevelBean bean = playerLevelDao.loadPlayerLevelByPlayerId(playerId);
-                    if(bean == null){
-                        // 增加新的玩家关卡数据
-                        playerLevelDao.addPlayerLevel(playerId);
-                        list.add(new Message(userId, introduction));
-                        bean = playerLevelDao.loadPlayerLevelByPlayerId(playerId);
-                    }
+                    cacheBean.setPlayerId(playerId);
+                    cacheBean.setLoseCount(0);
+                    cacheBean.setLevel(0);
                     // 添加缓存
-                    cacheBean = playerLevelBean2CacheBean(bean);
                     playerLevelCache.addPlayerLevel(cacheBean);
                 }
 
-                if(cacheBean.getLevel() == levelInfoConfig.getLevelNum()){
-                    //  通关
-                    list.add(new Message(userId, already_clear));
-                    dungeonGameCache.deletePlayer(userId);
-                }else{
-                    // 开始游戏 -1 点 hp
-                    LevelBean levelBean = levelInfoConfig.getLevelBean(cacheBean.getLevel());
-                    playerModel.updatePlayerHP(Integer.parseInt(userId), hp - 1);
-                    list.add(new Message(userId, introduction));
-                    Message message = levelInfo2Message(userId, levelBean);
-                    list.add(message);
-                }
+                LevelBean levelBean = levelInfoConfig.getLevelBean(cacheBean.getLevel());
+                // 开始游戏 -1 点 hp
+                PlayerResult player = playerModel.getPlayerByPlayerId(playerId);
+                playerModel.updatePlayerHP(playerId, player.getHp() - 1);
+
+                list.add(new Message(userId, introduction));
+                Message message = levelInfo2Message(userId, levelBean);
+                list.add(message);
+
+                logger.info("玩家:{} 开始地下城冒险游戏", playerId);
             }
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
         return new Messages(list);
     }
@@ -164,29 +165,24 @@ public class DungeonGameCMDs {
      */
     public Messages playGame(String...args){
 
-        String userId = args[0];
-        Integer playerId = Integer.parseInt(userId);
         List<Message> list = new ArrayList<>();
-        if(args.length != 2){
-            list.add(new Message(userId, input_format_error));
-        }else if(!dungeonGameCache.playerAtGame(userId)){
-            list.add(new Message(userId, not_at_game));
-        }else {
 
-            String action = args[1];
-            if (!NumUtils.checkDigit(action)) {
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try{
+            String userId = args[0];
+            Integer playerId = Integer.parseInt(userId);
+            if(args.length != 2){
                 list.add(new Message(userId, input_format_error));
-            } else if (Integer.parseInt(action) < 0 || Integer.parseInt(action) > 2) {
+            } else if(!dungeonGameCache.playerAtGame(userId)){
+                list.add(new Message(userId, not_at_game));
+            } else if (!NumUtils.checkDigit(args[1])) {
+                list.add(new Message(userId, input_format_error));
+            } else if (Integer.parseInt(args[1]) < 0 || Integer.parseInt(args[1]) > 2) {
                 list.add(new Message(userId, input_format_error));
             } else {
 
                 PlayerLevelCacheBean cacheBean = playerLevelCache.getPlayerLevelByPlayerId(playerId);
-                if(cacheBean == null){
-                    PlayerLevelBean bean = playerLevelDao.loadPlayerLevelByPlayerId(playerId);
-                    cacheBean = playerLevelBean2CacheBean(bean);
-                    playerLevelCache.addPlayerLevel(cacheBean);
-                }
-
                 PlayerResult player = playerModel.getPlayerByPlayerId(playerId);
                 LevelBean levelBeanInfo = levelInfoConfig.getLevelBean(cacheBean.getLevel());
 
@@ -200,118 +196,126 @@ public class DungeonGameCMDs {
                 } else {
                     // 挑战失败，更新玩家关卡信息
                     cacheBean.setLoseCount(cacheBean.getLoseCount() + 1);
-                    PlayerLevelBean bean = playerLevelDao.loadPlayerLevelByPlayerId(playerId);
-                    bean.setLoseCount(bean.getLoseCount() + 1);
                     playerLevelCache.updatePlayerLevelSelective(cacheBean);
-                    playerLevelDao.updateRecordSelective(bean);
 
                     // 退出游戏
                     dungeonGameCache.deletePlayer(userId);
                     list.add(new Message(userId, lost));
                 }
+
+                logger.info("玩家：{} 完成一局游戏", playerId);
             }
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
+
         return new Messages(list);
     }
 
     public Messages showByHpCost(String...args){
-        String userId = args[0];
         List<Message> list = new ArrayList<>();
-        if(args.length != 1){
-            list.add(new Message(userId, input_format_error));
-        }else{
-            int playerId = Integer.parseInt(userId);
-            Integer buyCount = dungeonGameCache.getBuyHpCount(playerId);
-            // 买了 10 次，达到购买上限
-            if(buyCount == 10){
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try{
+            String userId = args[0];
+            Integer playerId = Integer.parseInt(userId);
+            if(args.length != 1){
+                list.add(new Message(userId, input_format_error));
+            }else if(isReachBuyHpLimit(playerId)){
+                // 买了 10 次，达到购买上限
                 list.add(new Message(userId, reach_daily_buy_limit));
             }else{
+                Integer buyCount = dungeonGameCache.getBuyHpCount(playerId);
                 list.add(new Message(userId, buy_hp_cost + (buyCount + 1)));
             }
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
         return new Messages(list);
     }
 
     public Messages buyHp(String...args){
-        String userId = args[0];
         List<Message> list = new ArrayList<>();
-        if(args.length != 1){
-            list.add(new Message(userId, input_format_error));
-        }else{
 
-            int playerId = Integer.parseInt(userId);
-            int buyCount = dungeonGameCache.getBuyHpCount(playerId);
-            int cost = buyCount + 1;
-
-            PlayerResult player = playerModel.getPlayerByPlayerId(playerId);
-            if(buyCount == 10){
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try{
+            String userId = args[0];
+            Integer playerId = Integer.parseInt(userId);
+            if(args.length != 1){
+                list.add(new Message(userId, input_format_error));
+            }else if(isReachBuyHpLimit(playerId)){
+                // 买了 10 次，达到购买上限
                 list.add(new Message(userId, reach_daily_buy_limit));
-            }else if(player.getHp() == 100){
+            }else if(playerModel.getPlayerByPlayerId(playerId).getHp() == 100){
+                // 体力满了
                 list.add(new Message(userId, hp_is_full));
-            }else if(player.getGold() < cost){
+            }else if(!haveEnoughGold(playerId)){
+                // 不够钱
                 list.add(new Message(userId, gold_not_enough));
-            } else {
+            }else{
 
+                PlayerResult player = playerModel.getPlayerByPlayerId(playerId);
+                int buyCount = dungeonGameCache.getBuyHpCount(playerId);
+                int cost = buyCount + 1;
+                // 减去金币数
+                playerModel.updatePlayerGold(playerId, player.getGold() - cost);
+                // 增加体力
+                playerModel.updatePlayerHP(playerId, player.getHp() + 1);
+                // 更新购买记录
+                dungeonGameCache.incrBuyHpCount(playerId);
+                list.add(new Message(userId, "您花费了 " + (buyCount + 1) + " 金币提升了一点体力"));
 
-                Integer gold = player.getGold();
-                Integer hp = player.getHp();
-                try{
-                    // 减去金币数
-                    playerModel.updatePlayerGold(playerId, gold - cost);
-                    // 增加体力
-                    playerModel.updatePlayerHP(playerId, hp + 1);
-                    // 更新购买记录
-                    dungeonGameCache.incrBuyHpCount(playerId);
-                    list.add(new Message(userId, "您花费了 " + (buyCount + 1) + " 金币提升了一点体力"));
-                }catch (Exception e){
-
-                    e.printStackTrace();
-                    list.add(new Message(userId, unexpected_error_happened));
-                    // 失败回滚
-                    playerModel.updatePlayerGold(playerId, gold);
-                    playerModel.updatePlayerHP(playerId, hp);
-                    return new Messages(list);
-                }
+                logger.info("用户:{} 购买一点体力", playerId);
             }
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
         return new Messages(list);
     }
 
     public Messages quitGame(String...args){
 
-        String userId = args[0];
         List<Message> list = new ArrayList<>();
-        if(args.length != 1){
-            list.add(new Message(userId, input_format_error));
-        }else if(!dungeonGameCache.playerAtGame(userId)){
-            list.add(new Message(userId, not_at_game));
-        }else{
-            // 玩家退出关卡
-            dungeonGameCache.deletePlayer(userId);
-            list.add(new Message(userId, quit_game));
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try{
+            String userId = args[0];
+            if(args.length != 1){
+                list.add(new Message(userId, input_format_error));
+            }else if(!dungeonGameCache.playerAtGame(userId)){
+                list.add(new Message(userId, not_at_game));
+            }else{
+                // 玩家退出关卡
+                dungeonGameCache.deletePlayer(userId);
+                list.add(new Message(userId, quit_game));
+            }
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
         return new Messages(list);
     }
 
     public Messages showBag(String...args){
-        String userId = args[0];
         List<Message> list = new ArrayList<>();
-        if(args.length != 1){
-            list.add(new Message(userId, input_format_error));
-        }else{
-            List<PlayerItemResult> items = bagModel.getAllPlayerItems(Integer.parseInt(userId));
-            if(items == null || items.size() == 0){
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try{
+            String userId = args[0];
+            Integer playerId = Integer.parseInt(userId);
+            if(args.length != 1){
+                list.add(new Message(userId, input_format_error));
+            } else if(isBagEmpty(playerId)){
                 list.add(new Message(userId, bag_is_empty));
-            }else{
+            } else{
+                List<PlayerItemResult> items = bagModel.getAllPlayerItems(playerId);
                 StringBuilder sb = new StringBuilder();
                 sb.append("==================================================");
                 sb.append("\r\r\n");
                 sb.append("    您的背包：");
                 sb.append("\r\r\n");
-                int count = 0;
                 for(PlayerItemResult item : items){
                     if(item.getNum() != 0){
-                        count++;
                         ItemResult i = itemModel.getItemByItemId(item.getItemId());
                         sb.append("===>道具名: " + i.getItemName());
                         sb.append("\r\n");
@@ -324,67 +328,64 @@ public class DungeonGameCMDs {
                     }
                 }
                 sb.append("==================================================");
-
-                if(count != 0){
-                    list.add(new Message(userId, sb.toString()));
-                }else{
-                    list.add(new Message(userId, bag_is_empty));
-                }
+                list.add(new Message(userId, sb.toString()));
             }
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
         return new Messages(list);
     }
 
     public Messages useItem(String...args){
-        String userId = args[0];
         List<Message> list = new ArrayList<>();
-        if(args.length != 2){
-            list.add(new Message(userId, input_format_error));
-        }else if(!dungeonGameCache.playerAtGame(userId)){
-            list.add(new Message(userId, item_must_use_at_game));
-        } else{
-            Integer itemId = Integer.parseInt(args[1]);
-            ItemResult itemBean = itemModel.getItemByItemId(itemId);
-            if(itemBean == null){
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try{
+            String userId = args[0];
+            Integer playerId = Integer.parseInt(userId);
+            if(args.length != 2){
+                list.add(new Message(userId, input_format_error));
+            } else if(!dungeonGameCache.playerAtGame(userId)){
+                // 未处于游戏状态
+                list.add(new Message(userId, item_must_use_at_game));
+            } else if(itemModel.getItemByItemId(Integer.parseInt(args[1])) == null){
+                // 道具不存在
+                list.add(new Message(userId, item_not_exists));
+            } else if(isBagEmpty(playerId)){
+                // 背包为空
+                list.add(new Message(userId, bag_is_empty));
+            } else if(!isBagHaveItem(playerId, Integer.parseInt(args[1]))){
+                // 背包中没有该道具
                 list.add(new Message(userId, bag_not_exists_item));
-            }else{
+            } else {
+                Integer itemId = Integer.parseInt(args[1]);
                 PlayerItemResult pItem = bagModel.getPlayerItem(Integer.parseInt(userId), itemId);
-                if(pItem == null || pItem.getNum() == 0){
-                    list.add(new Message(userId, bag_not_exists_item));
-                }else{
+                if(pItem.getItemId() == 1){
+                    PlayerResult player = playerModel.getPlayerByPlayerId(playerId);
+                    PlayerLevelCacheBean cacheBean = playerLevelCache.getPlayerLevelByPlayerId(playerId);
 
-                    for(Message msg : useItem(pItem)){
+                    // 更新背包
+                    pItem.setNum(pItem.getNum() - 1);
+                    pItem.setPlayerId(playerId);
+                    bagModel.updatePlayerItem(pItem);
+
+                    ItemResult i = itemModel.getItemByItemId(pItem.getItemId());
+                    list.add(new Message("" + player.getPlayerId(), "您使用了道具: " + i.getItemName()));
+
+                    for(Message msg : win(player, cacheBean)){
                         list.add(msg);
                     }
                 }
             }
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
         return new Messages(list);
     }
 
     private List<Message> useItem(PlayerItemResult item){
         List<Message> list = new ArrayList<>();
-        if(item.getItemId() == 1){
-            Integer playerId = item.getPlayerId();
-            PlayerResult player = playerModel.getPlayerByPlayerId(playerId);
 
-            PlayerLevelCacheBean cacheBean = playerLevelCache.getPlayerLevelByPlayerId(playerId);
-            if(cacheBean == null){
-                PlayerLevelBean bean = playerLevelDao.loadPlayerLevelByPlayerId(playerId);
-                cacheBean = playerLevelBean2CacheBean(bean);
-                playerLevelCache.addPlayerLevel(cacheBean);
-            }
-
-            // 更新背包
-            item.setNum(item.getNum() - 1);
-            item.setPlayerId(playerId);
-            bagModel.updatePlayerItem(item);
-            ItemResult i = itemModel.getItemByItemId(item.getItemId());
-            list.add(new Message("" + player.getPlayerId(), "您使用了道具: " + i.getItemName()));
-            for(Message msg : win(player, cacheBean)){
-                list.add(msg);
-            }
-        }
         return list;
     }
 
@@ -434,12 +435,6 @@ public class DungeonGameCMDs {
         cacheBean.setLevel(cacheBean.getLevel() + 1);
         cacheBean.setLoseCount(0);
         playerLevelCache.updatePlayerLevelSelective(cacheBean);
-
-        PlayerLevelBean bean = playerLevelDao.loadPlayerLevelByPlayerId(playerId);
-        bean.setLevel(bean.getLevel() + 1);
-        bean.setLoseCount(0);
-        playerLevelDao.updateRecordSelective(bean);
-
         dungeonGameCache.deletePlayer("" + playerId);
         return list;
     }
@@ -485,5 +480,47 @@ public class DungeonGameCMDs {
         cacheBean.setLoseCount(bean.getLoseCount());
         cacheBean.setPlayerId(bean.getPlayerId());
         return cacheBean;
+    }
+
+    private boolean isEnoughHp(Integer playerId){
+        return playerModel.getPlayerByPlayerId(playerId).getHp() > 0;
+    }
+
+    private boolean isClear(Integer playerId){
+        return playerLevelCache.getPlayerLevelByPlayerId(playerId).getLevel() == levelInfoConfig.getLevelNum();
+    }
+
+    private boolean isReachBuyHpLimit(Integer playerId){
+        return dungeonGameCache.getBuyHpCount(playerId) >= 10;
+    }
+
+    private boolean haveEnoughGold(Integer playerId) {
+        Integer record = dungeonGameCache.getBuyHpCount(playerId);
+        PlayerResult player = playerModel.getPlayerByPlayerId(playerId);
+        return player.getGold() > (record + 1);
+    }
+
+    private boolean isBagEmpty(Integer playerId){
+        List<PlayerItemResult> items = bagModel.getAllPlayerItems(playerId);
+        if(items == null || items.size() == 0){
+            return true;
+        }
+        int count = 0;
+        for(PlayerItemResult item : items){
+            if(item.getNum() != 0){
+                count++;
+            }
+        }
+        return count == 0;
+    }
+
+    private boolean isBagHaveItem(Integer playerId, Integer itemId){
+        List<PlayerItemResult> pis = bagModel.getAllPlayerItems(playerId);
+        for(PlayerItemResult pir : pis){
+            if(pir.getItemId().equals(itemId) && pir.getNum() > 0){
+                return true;
+            }
+        }
+        return false;
     }
 }

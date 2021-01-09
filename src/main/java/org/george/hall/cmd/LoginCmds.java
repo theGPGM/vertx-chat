@@ -1,28 +1,31 @@
 package org.george.hall.cmd;
 
 
-import org.george.hall.dao.PlayerAuthDao;
-import org.george.hall.dao.bean.PlayerAuthBean;
+import org.george.hall.cache.PlayerAuthCache;
+import org.george.hall.cache.bean.PlayerAuthCacheBean;
 import org.george.hall.model.PlayerModel;
-import org.george.pojo.Message;
-import org.george.pojo.Messages;
-import org.george.hall.cache.PlayerCache;
-import org.george.hall.cache.bean.PlayerCacheBean;
-import org.george.hall.dao.PlayerDao;
-import org.george.hall.dao.bean.PlayerBean;
+import org.george.hall.uitl.JedisPool;
+import org.george.hall.uitl.ThreadLocalJedisUtils;
+import org.george.core.pojo.Message;
+import org.george.core.pojo.Messages;
+import org.george.hall.cache.PlayerInfoCache;
+import org.george.hall.cache.bean.PlayerInfoCacheBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class LoginCmds {
 
-    private PlayerCache playerCache = PlayerCache.getInstance();
+    private PlayerInfoCache playerInfoCache = PlayerInfoCache.getInstance();
 
-    private PlayerDao playerDao = PlayerDao.getInstance();
-
-    private PlayerAuthDao playerAuthDao = PlayerAuthDao.getInstance();
+    private PlayerAuthCache playerAuthCache = PlayerAuthCache.getInstance();
 
     private PlayerModel playerModel = PlayerModel.getInstance();
+
+    private Logger logger = LoggerFactory.getLogger(LoginCmds.class);
 
     private static final String input_format_error = "输入格式错误";
 
@@ -68,37 +71,33 @@ public class LoginCmds {
 
     /**
      * 玩家登录
-     * 此时会进行玩家的账号密码的校验
      * @param args
      * @return
      */
     public Messages login(String...args){
-
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
         List<Message> list = new ArrayList<>();
-        if(args == null || args.length != 2){
-            list.add(new Message(null, input_format_error));
-        }
-        else{
-            String playerName = args[0];
-            String password = args[1];
-
-            PlayerAuthBean authBean = playerAuthDao.loadPlayerAuthBeanByPlayerName(playerName);
-            if(authBean == null){
+        try{
+            if(args == null || args.length != 2){
+                list.add(new Message(null, input_format_error));
+            }else if(playerAuthCache.loadPlayerAuthCacheBeanByName(args[0]) == null){
                 list.add(new Message(null, username_or_password_wrong));
-            }else if(!authBean.getPassword().equals(password)){
+            }else if(!args[1].equals(playerAuthCache.loadPlayerAuthCacheBeanByName(args[0]).getPassword())){
                 list.add(new Message(null, username_or_password_wrong));
-            }else{
+            } else{
 
-                PlayerCacheBean cacheBean = playerCache.loadPlayerByPlayerId(authBean.getPlayerId());
-                if(cacheBean == null){
-                    PlayerBean bean = playerDao.loadPlayerByPlayerId(authBean.getPlayerId());
-                    cacheBean = bean2CacheBean(bean);
-                    playerCache.addPlayer(cacheBean);
-                }
+                String playerName = args[0];
+                PlayerAuthCacheBean cacheBean = playerAuthCache.loadPlayerAuthCacheBeanByName(playerName);
+                // 添加时间戳
+                playerInfoCache.addTimeStampIfNotExisting(cacheBean.getPlayerId());
 
-                list.add(new Message(String.valueOf(authBean.getPlayerId()), login_success));
-                playerCache.addTimeStampIfNotExisting(authBean.getPlayerId());
+                list.add(new Message(String.valueOf(cacheBean.getPlayerId()), login_success));
+
+                logger.info("用户登录:{}, 用户ID:{}", cacheBean.getPlayerName(), cacheBean.getPlayerId());
             }
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
         return new Messages(list);
     }
@@ -109,27 +108,40 @@ public class LoginCmds {
      * @return
      */
     public Messages register(String...args){
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
         List<Message> list = new ArrayList<>();
-        if(args == null || args.length != 2){
-            list.add(new Message(null, input_format_error));
-        }
-        else{
-            String username = args[0];
-            String password = args[1];
-
-            boolean result = playerAuthDao.addPlayer(username, password);
-            if(!result){
+        try{
+            if(args == null || args.length != 2){
+                list.add(new Message(null, input_format_error));
+            } else if(playerAuthCache.loadPlayerAuthCacheBeanByName(args[0]) != null){
                 list.add(new Message(null, user_already_exists));
-            }else{
-                PlayerAuthBean authBean = playerAuthDao.loadPlayerAuthBeanByPlayerName(username);
-                list.add(new Message(String.valueOf(authBean.getPlayerId()), register_success));
+            } else{
+                String username = args[0];
+                String password = args[1];
 
-                PlayerBean bean = new PlayerBean();
-                bean.setPlayerId(authBean.getPlayerId());
-                bean.setPlayerName(authBean.getPlayerName());
-                playerDao.addPlayer(bean);
-                playerCache.addTimeStampIfNotExisting(authBean.getPlayerId());
+                // 添加用户
+                PlayerAuthCacheBean cacheBean = new PlayerAuthCacheBean();
+                cacheBean.setPlayerName(username);
+                cacheBean.setPassword(password);
+                playerAuthCache.addPlayer(cacheBean);
+                cacheBean = playerAuthCache.loadPlayerAuthCacheBeanByName(username);
+                // 添加用户信息
+                PlayerInfoCacheBean playerInfoCacheBean = new PlayerInfoCacheBean();
+                playerInfoCacheBean.setPlayerId(cacheBean.getPlayerId());
+                playerInfoCacheBean.setPlayerName(cacheBean.getPlayerName());
+                playerInfoCache.addPlayer(playerInfoCacheBean);
+                // 添加时间戳
+                playerInfoCache.addTimeStampIfNotExisting(cacheBean.getPlayerId());
+
+                // 返回消息
+                list.add(new Message(String.valueOf(cacheBean.getPlayerId()), register_success));
+
+                // 日志
+                logger.info("用户注册: 用户名:{}, 用户 ID:{}", cacheBean.getPlayerName(), cacheBean.getPlayerId());
             }
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
         return new Messages(list);
     }
@@ -141,22 +153,20 @@ public class LoginCmds {
      */
     public Messages info(String...args){
         List<Message> list = new ArrayList<>();
-        Integer playerId = Integer.parseInt(args[0]);
-        if(args.length != 1){
-            list.add(new Message(String.valueOf(playerId),input_format_error));
-        } else {
-
-            PlayerCacheBean cacheBean = playerCache.loadPlayerByPlayerId(playerId);
-            if (cacheBean == null) {
-                PlayerBean bean = playerDao.loadPlayerByPlayerId(playerId);
-                cacheBean = bean2CacheBean(bean);
-                playerCache.addPlayer(cacheBean);
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try{
+            if(args.length != 1){
+                list.add(new Message(args[0],input_format_error));
+            } else {
+                PlayerInfoCacheBean cacheBean = playerInfoCache.loadPlayerByPlayerId(Integer.parseInt(args[0]));
+                int hp = cacheBean.getHp();
+                int gold = cacheBean.getGold();
+                String name = cacheBean.getPlayerName();
+                list.add(new Message(String.valueOf(cacheBean.getPlayerId()), info2Msg(name, hp, gold)));
             }
-
-            int hp = playerModel.getPlayerCurrentHP(playerId);
-            int gold = cacheBean.getGold();
-            String name = cacheBean.getPlayerName();
-            list.add(new Message(String.valueOf(cacheBean.getPlayerId()), info2Msg(name, hp, gold)));
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
         return new Messages(list);
     }
@@ -168,27 +178,19 @@ public class LoginCmds {
      */
     public Messages logout(String...args){
         List<Message> list = new ArrayList<>();
-        Message msg = null;
-
-        String userId = args[0];
-        if(args.length != 1){
-            msg = new Message(null,input_format_error);
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try{
+            if(args.length != 1){
+                list.add(new Message(null,input_format_error));
+            } else {
+                playerModel.logout(args[0]);
+                list.add(new Message(null,quit_login_success));
+            }
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
-        else {
-            playerModel.logout(userId);
-            msg = new Message(null,quit_login_success);
-        }
-        list.add(msg);
         return new Messages(list);
-    }
-
-    private PlayerCacheBean bean2CacheBean(PlayerBean bean){
-        PlayerCacheBean cacheBean = new PlayerCacheBean();
-        cacheBean.setPlayerId(bean.getPlayerId());
-        cacheBean.setPlayerName(bean.getPlayerName());
-        cacheBean.setHp(bean.getHp());
-        cacheBean.setGold(bean.getGold());
-        return cacheBean;
     }
 
     private String info2Msg(String name, Integer hp, Integer gold){
