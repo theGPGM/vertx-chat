@@ -1,14 +1,19 @@
 package org.george.auction.cache.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.george.auction.cache.AuctionCache;
 import org.george.auction.cache.bean.AuctionCacheBean;
-import org.george.util.CalendarUtils;
-import org.george.util.ThreadLocalJedisUtils;
+import org.george.auction.dao.AuctionDao;
+import org.george.auction.dao.bean.AuctionBean;
+import org.george.auction.util.CalendarUtils;
+import org.george.auction.util.ThreadLocalJedisUtils;
 import redis.clients.jedis.Jedis;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class AuctionCacheImpl implements AuctionCache {
 
@@ -20,77 +25,172 @@ public class AuctionCacheImpl implements AuctionCache {
         return instance;
     }
 
+    private AuctionDao auctionDao = AuctionDao.getInstance();
+
     @Override
     public List<AuctionCacheBean> getAuctions() {
         Jedis jedis = ThreadLocalJedisUtils.getJedis();
-        List<AuctionCacheBean> list = new ArrayList<>();
-        Set<String> items = jedis.smembers("auctions");
+        ObjectMapper objectMapper = new ObjectMapper();
+        if(!jedis.exists("auctions")){
+            List<AuctionCacheBean> list = new ArrayList<>();
+            List<AuctionBean> beans = auctionDao.getAuctions();
+            for(AuctionBean bean : beans){
+                AuctionCacheBean cacheBean = new AuctionCacheBean();
+                cacheBean.setAuctionId(bean.getAuctionId());
+                cacheBean.setAuctionType(bean.getAuctionType());
+                cacheBean.setCost(bean.getCost());
+                cacheBean.setDeductionType(bean.getDeductionType());
+                cacheBean.setNum(bean.getNum());
 
-        if(items == null || items.size() == 0){
-            return null;
+                list.add(cacheBean);
+            }
+
+            // 添加缓存
+            try {
+                String json = objectMapper.writeValueAsString(list);
+                jedis.set("auctions", json);
+                return list;
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
         }else{
-            for(String auctionId : items){
-                AuctionCacheBean item = getAuction(Integer.parseInt(auctionId));
-                if(item != null){
-                    list.add(item);
+            String json = jedis.get("auctions");
+            try {
+                return objectMapper.readValue(json, new TypeReference<List<AuctionCacheBean>>(){});
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void batchUpdateSelective(List<AuctionCacheBean> list) {
+        Jedis jedis = ThreadLocalJedisUtils.getJedis();
+        ArrayList<AuctionBean> beans = new ArrayList<>();
+        for(AuctionCacheBean cacheBean : list){
+            AuctionBean bean = new AuctionBean();
+            bean.setAuctionId(cacheBean.getAuctionId());
+            bean.setAuctionType(cacheBean.getAuctionType());
+            bean.setCost(cacheBean.getCost());
+            bean.setDeductionType(cacheBean.getDeductionType());
+            bean.setNum(cacheBean.getNum());
+
+            beans.add(bean);
+        }
+
+        // 批量更新数据库
+        auctionDao.batchUpdateSelective(beans);
+
+        // 批量更新缓存
+        List<AuctionCacheBean> cacheBeans = getAuctions();
+        for(AuctionCacheBean old : cacheBeans){
+            for(AuctionCacheBean cacheBean : list){
+                if(cacheBean.getAuctionId().equals(old.getAuctionId())){
+                    if(cacheBean.getAuctionType() != null){
+                        old.setAuctionType(cacheBean.getAuctionType());
+                    }
+                    if(cacheBean.getCost() != null){
+                        old.setCost(cacheBean.getCost());
+                    }
+                    if(cacheBean.getDeductionType() != null){
+                        old.setDeductionType(cacheBean.getDeductionType());
+                    }
+                    if(cacheBean.getNum() != null){
+                        old.setNum(cacheBean.getNum());
+                    }
                 }
             }
-            return list;
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            String json = objectMapper.writeValueAsString(cacheBeans);
+            jedis.set("auctions", json);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
         }
     }
 
     @Override
-    public void addAuctionItemCacheBean(AuctionCacheBean item) {
+    public void updateSelective(AuctionCacheBean cacheBean) {
         Jedis jedis = ThreadLocalJedisUtils.getJedis();
-        jedis.sadd("auctions", String.valueOf(item.getAuctionId()));
-        jedis.hset("auction#" + item.getAuctionId(), "auction_type", String.valueOf(item.getAuctionType()));
-        jedis.hset("auction#" + item.getAuctionId(), "deduction_type", String.valueOf(item.getDeductionType()));
-        jedis.hset("auction#" + item.getAuctionId(), "cost", String.valueOf(item.getCost()));
-        jedis.hset("auction#" + item.getAuctionId(), "num", String.valueOf(item.getNum()));
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // 更新数据库
+        AuctionBean bean = new AuctionBean();
+        bean.setAuctionId(cacheBean.getAuctionId());
+        bean.setAuctionType(cacheBean.getAuctionType());
+        bean.setCost(cacheBean.getCost());
+        bean.setDeductionType(cacheBean.getDeductionType());
+        bean.setNum(cacheBean.getNum());
+        auctionDao.updateSelective(bean);
+
+        // 更新缓存
+        List<AuctionCacheBean> auctions = getAuctions();
+        for(AuctionCacheBean old : auctions){
+            if(old.getAuctionId().equals(cacheBean.getAuctionId())){
+                if(cacheBean.getAuctionType() != null){
+                    old.setAuctionType(cacheBean.getAuctionType());
+                }
+                if(cacheBean.getCost() != null){
+                    old.setCost(cacheBean.getCost());
+                }
+                if(cacheBean.getDeductionType() != null){
+                    old.setDeductionType(cacheBean.getDeductionType());
+                }
+                if(cacheBean.getNum() != null){
+                    old.setNum(cacheBean.getNum());
+                }
+            }
+        }
+        try {
+            String json = objectMapper.writeValueAsString(auctions);
+            jedis.set("auctions", json);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
-    public void updateSelective(AuctionCacheBean item) {
+    public void delete(Integer auctionId) {
         Jedis jedis = ThreadLocalJedisUtils.getJedis();
-        jedis.sadd("auctions", String.valueOf(item.getAuctionId()));
-        if(item.getNum() != null){
-            jedis.hset("auction#" + item.getAuctionId(), "num", String.valueOf(item.getNum()));
-        }
-        if(item.getCost() != null){
-            jedis.hset("auction#" + item.getAuctionId(), "cost", String.valueOf(item.getCost()));
-        }
-        if(item.getAuctionType() != null){
-            jedis.hset("auction#" + item.getAuctionId(), "auction_type", String.valueOf(item.getAuctionType()));
-        }
-        if(item.getDeductionType() != null){
-            jedis.hset("auction#" + item.getAuctionId(), "deduction_type", String.valueOf(item.getDeductionType()));
-        }
-    }
+        ObjectMapper objectMapper = new ObjectMapper();
+        // 更新数据库
+        auctionDao.deleteAuctionItem(auctionId);
 
-    @Override
-    public void deleteAuctionItemCacheBean(Integer auctionId) {
-        Jedis jedis = ThreadLocalJedisUtils.getJedis();
-        jedis.srem("auctions", String.valueOf(auctionId));
-        jedis.del("auction#" + auctionId);
+        // 更新缓存
+        if(jedis.exists("auctions")){
+            String json = jedis.get("auctions");
+            try {
+                List<AuctionCacheBean> list = objectMapper.readValue(json, new TypeReference<List<AuctionCacheBean>>(){});
+                int count = 0;
+                for(AuctionCacheBean bean : list){
+                    if(bean.getAuctionId().equals(auctionId)){
+                        break;
+                    }
+                    count++;
+                }
+                if(list.size() > count){
+                    list.remove(count);
+                    String newJson = objectMapper.writeValueAsString(list);
+                    jedis.set("auctions", newJson);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
     public AuctionCacheBean getAuction(Integer auctionId) {
-        Jedis jedis = ThreadLocalJedisUtils.getJedis();
-        AuctionCacheBean item = null;
-        if(jedis.sismember("auctions", String.valueOf(auctionId))){
-            item = new AuctionCacheBean();
-            Integer auctionType = Integer.parseInt(jedis.hget("auction#" + auctionId, "auction_type"));
-            Integer deductionType = Integer.parseInt(jedis.hget("auction#" + auctionId, "deduction_type"));
-            Integer cost = Integer.parseInt(jedis.hget("auction#" + auctionId, "cost"));
-            Integer num = Integer.parseInt(jedis.hget("auction#" + auctionId, "num"));
-            item.setAuctionId(auctionId);
-            item.setAuctionType(auctionType);
-            item.setDeductionType(deductionType);
-            item.setNum(num);
-            item.setCost(cost);
+        List<AuctionCacheBean> auctions = getAuctions();
+        for(AuctionCacheBean cacheBean : auctions){
+            if(cacheBean.getAuctionId().equals(auctionId)){
+                return cacheBean;
+            }
         }
-        return item;
+        return null;
     }
 
     @Override

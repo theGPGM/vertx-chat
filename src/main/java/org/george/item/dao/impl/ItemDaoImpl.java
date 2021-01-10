@@ -4,7 +4,6 @@ import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import org.george.item.dao.ItemDao;
 import org.george.item.dao.bean.ItemBean;
-import org.george.util.JFinalUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,11 +67,5 @@ public class ItemDaoImpl implements ItemDao {
             record.set("description", bean.getDescription());
         }
         Db.update("item", "item_id", record);
-    }
-
-    public static void main(String[] args) {
-        JFinalUtils.initJFinalConfig();
-        ItemDaoImpl.getInstance().deleteItem(2);
-        System.out.println(ItemDaoImpl.getInstance().getAllItems());
     }
 }

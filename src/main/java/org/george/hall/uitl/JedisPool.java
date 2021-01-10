@@ -1,6 +1,5 @@
 package org.george.hall.uitl;
 
-import org.george.util.PropertiesUtils;
 import redis.clients.jedis.Jedis;
 
 import java.util.Properties;

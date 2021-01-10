@@ -10,7 +10,8 @@ import org.george.auction.DeliveryHandler;
 import org.george.chat.model.ChatRoomModel;
 import org.george.cmd.model.CmdModel;
 import org.george.cmd.model.pojo.CmdMessageResult;
-import org.george.config.AuctionConfig;
+import org.george.core.util.JFinalUtils;
+import org.george.core.util.MessageOuter;
 import org.george.dungeon_game.model.DungeonGameModel;
 import org.george.hall.ClientCloseHandler;
 import org.george.hall.model.ClientModel;
@@ -18,10 +19,9 @@ import org.george.hall.model.PlayerModel;
 import org.george.item.model.ItemModel;
 import org.george.auction.pojo.AuctionTypeEnum;
 import org.george.auction.pojo.DeductionTypeEnum;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-
-import org.george.util.*;
-import redis.clients.jedis.Jedis;
 
 import java.util.*;
 
@@ -33,13 +33,13 @@ public class Main extends AbstractVerticle {
 
   private DungeonGameModel dungeonGameModel = DungeonGameModel.getInstance();
 
-  private MessageOuter messageOuter = MessageOuter.getInstance();
-
   private CmdModel cmdModel = CmdModel.getInstance();
 
-  private AuctionConfig auctionConfig = AuctionConfig.getInstance();
-
   private ChatRoomModel roomModel = ChatRoomModel.getInstance();
+
+  private MessageOuter messageOuter = MessageOuter.getInstance();
+
+  private Logger logger = LoggerFactory.getLogger(Main.class);
 
   public static void main(String[] args) {
     Vertx.vertx().deployVerticle(new Main());
@@ -56,10 +56,6 @@ public class Main extends AbstractVerticle {
       // 预加载 JFinal 的配置
       JFinalUtils.initJFinalConfig();
 
-      // 将所有与 cmd 相关的数据加载到内存中
-      cmdModel.loadCmdDescriptionProperties(PropertiesUtils.loadProperties("src/main/resources/conf/description.properties"));
-      cmdModel.loadCmdProperties(PropertiesUtils.loadProperties("src/main/resources/conf/cmds.properties"));
-
       // 观察者模式，添加客户端关闭事件观察者，用于在客户端强制关闭时，清除缓存
       ClientCloseHandler.addObserver(roomModel);
       ClientCloseHandler.addObserver(dungeonGameModel);
@@ -71,12 +67,6 @@ public class Main extends AbstractVerticle {
 
       // 观察者模式，添加货物派发事件观察者，用于道具等物品的派发
       DeliveryHandler.addObserver(AuctionTypeEnum.Item.getType(), ItemModel.getInstance());
-    }, res -> {
-      // 预加载错误就无法启动服务器
-      if(res.failed()){
-        res.cause().printStackTrace();
-        System.exit(-1);
-      }
     });
 
     // 监听连接
@@ -93,12 +83,12 @@ public class Main extends AbstractVerticle {
             // 进入 worker 线程
             List<CmdMessageResult> list = cmdModel.execute(hId, sb.toString());
             for(CmdMessageResult msg : list){
-              messageOuter.out(msg.getMessage(), msg.gethId());
+              messageOuter.out(msg.gethId(), msg.getMessage());
             }
             sb.delete(0, sb.length());
           }, res -> {
             if(res.failed()){
-              res.cause().printStackTrace();
+              logger.error("发生异常:{}", res.cause().getMessage());
             }
           });
         }else{
@@ -108,13 +98,7 @@ public class Main extends AbstractVerticle {
 
       handler.closeHandler(fun -> {
         vertx.executeBlocking(promise -> {
-          Jedis jedis = JedisPool.getJedis();
-          ThreadLocalJedisUtils.addJedis(jedis);
-          try{
-            ClientCloseHandler.notify(hId);
-          }finally {
-            JedisPool.returnJedis(jedis);
-          }
+          ClientCloseHandler.notify(hId);
         });
       });
     });
@@ -131,6 +115,6 @@ public class Main extends AbstractVerticle {
             .append("[login:username:password]:登录\r\n")
             .append("[register:username:password]:注册\r\n")
             .append("============================================================");
-    messageOuter.out(sb.toString(), hId);
+    messageOuter.out(hId, sb.toString());
   }
 }

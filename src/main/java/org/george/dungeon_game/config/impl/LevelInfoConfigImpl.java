@@ -54,7 +54,7 @@ public class LevelInfoConfigImpl implements LevelInfoConfig {
                 }
                 
                 for(String pro : properties){
-                    if(pro == null){
+                    if(pro == null || pro.length() == 0){
                         throw new CSVFormatException("level.csv 文件第[" + count + "]行编写错误");
                     }
                 }

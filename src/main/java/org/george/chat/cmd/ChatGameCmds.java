@@ -3,13 +3,13 @@ package org.george.chat.cmd;
 
 import org.george.chat.cache.RoomCache;
 import org.george.chat.util.JedisPool;
+import org.george.chat.util.NumUtils;
 import org.george.chat.util.ThreadLocalJedisUtils;
 import org.george.hall.model.PlayerModel;
-import org.george.core.pojo.Message;
-import org.george.core.pojo.Messages;
+import org.george.cmd.pojo.Message;
+import org.george.cmd.pojo.Messages;
 import org.george.chat.cache.GameCache;
 import org.george.hall.model.pojo.PlayerResult;
-import org.george.util.NumUtils;
 import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;

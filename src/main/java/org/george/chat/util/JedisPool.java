@@ -1,6 +1,5 @@
 package org.george.chat.util;
 
-import org.george.util.PropertiesUtils;
 import redis.clients.jedis.Jedis;
 
 import java.util.Properties;

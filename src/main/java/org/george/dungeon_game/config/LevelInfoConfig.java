@@ -1,8 +1,8 @@
 package org.george.dungeon_game.config;
 
 
-import org.george.config.impl.LevelInfoConfigImpl;
 import org.george.dungeon_game.config.bean.LevelBean;
+import org.george.dungeon_game.config.impl.LevelInfoConfigImpl;
 
 public interface LevelInfoConfig {
 

@@ -12,7 +12,7 @@ public interface BagDao {
 
     List<PlayerItemBean> getPlayerItems(Integer player);
 
-    void updatePlayerItem(PlayerItemBean item);
+    void updateSelective(PlayerItemBean item);
 
     void deletePlayerItem(Integer playerId, Integer itemId);
 

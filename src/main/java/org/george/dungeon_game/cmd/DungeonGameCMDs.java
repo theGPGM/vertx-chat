@@ -15,10 +15,9 @@ import org.george.dungeon_game.util.NumUtils;
 import org.george.dungeon_game.util.ThreadLocalJedisUtils;
 import org.george.hall.model.pojo.PlayerResult;
 import org.george.item.model.pojo.ItemResult;
-import org.george.core.pojo.Message;
-import org.george.core.pojo.Messages;
+import org.george.cmd.pojo.Message;
+import org.george.cmd.pojo.Messages;
 import org.george.dungeon_game.cache.DungeonGameCache;
-import org.george.dungeon_game.dao.bean.PlayerLevelBean;
 import org.george.hall.model.PlayerModel;
 import org.george.item.model.ItemModel;
 import org.slf4j.Logger;
@@ -384,12 +383,6 @@ public class DungeonGameCMDs {
         return new Messages(list);
     }
 
-    private List<Message> useItem(PlayerItemResult item){
-        List<Message> list = new ArrayList<>();
-
-        return list;
-    }
-
     private List<Message> win(PlayerResult player, PlayerLevelCacheBean cacheBean){
         List<Message> list = new ArrayList<>();
         list.add(new Message("" + player.getPlayerId(), win));
@@ -473,14 +466,6 @@ public class DungeonGameCMDs {
      */
     private boolean dropItem(int dropRate){
         return rand.nextInt(100 ) < dropRate;
-    }
-
-    private PlayerLevelCacheBean playerLevelBean2CacheBean(PlayerLevelBean bean){
-        PlayerLevelCacheBean cacheBean = new PlayerLevelCacheBean();
-        cacheBean.setLevel(bean.getLevel());
-        cacheBean.setLoseCount(bean.getLoseCount());
-        cacheBean.setPlayerId(bean.getPlayerId());
-        return cacheBean;
     }
 
     private boolean isEnoughHp(Integer playerId){

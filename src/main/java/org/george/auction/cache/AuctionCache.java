@@ -9,11 +9,11 @@ public interface AuctionCache {
 
     List<AuctionCacheBean> getAuctions();
 
-    void addAuctionItemCacheBean(AuctionCacheBean item);
+    void batchUpdateSelective(List<AuctionCacheBean> list);
 
     void updateSelective(AuctionCacheBean item);
 
-    void deleteAuctionItemCacheBean(Integer itemId);
+    void delete(Integer itemId);
 
     AuctionCacheBean getAuction(Integer itemId);
     

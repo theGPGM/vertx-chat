@@ -8,7 +8,6 @@ import org.george.hall.dao.PlayerAuthDao;
 import org.george.hall.dao.bean.PlayerAuthBean;
 import org.george.hall.uitl.JedisPool;
 import org.george.hall.uitl.ThreadLocalJedisUtils;
-import org.george.util.JFinalUtils;
 import redis.clients.jedis.Jedis;
 
 import java.io.IOException;
@@ -128,13 +127,5 @@ public class PlayerAuthCacheImpl implements PlayerAuthCache {
             e.printStackTrace();
         }
         playerAuthDao.deletePlayer(playerId);
-    }
-
-    public static void main(String[] args) {
-        Jedis jedis = JedisPool.getJedis();
-        ThreadLocalJedisUtils.addJedis(jedis);
-        JFinalUtils.initJFinalConfig();
-        System.out.println(instance.loadPlayerAuthCacheBeanByName("lucy"));
-        JedisPool.returnJedis(jedis);
     }
 }

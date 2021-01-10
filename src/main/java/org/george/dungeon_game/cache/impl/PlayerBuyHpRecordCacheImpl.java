@@ -1,7 +1,7 @@
 package org.george.dungeon_game.cache.impl;
 
+import org.george.chat.util.ThreadLocalJedisUtils;
 import org.george.dungeon_game.cache.PlayerBuyHpRecordCache;
-import org.george.util.ThreadLocalJedisUtils;
 import redis.clients.jedis.Jedis;
 
 public class PlayerBuyHpRecordCacheImpl implements PlayerBuyHpRecordCache {

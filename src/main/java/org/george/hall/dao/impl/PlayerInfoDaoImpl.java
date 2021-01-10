@@ -5,7 +5,6 @@ import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import org.george.hall.dao.PlayerInfoDao;
 import org.george.hall.dao.bean.PlayerInfoBean;
-import org.george.util.JFinalUtils;
 
 public class PlayerInfoDaoImpl implements PlayerInfoDao {
 
@@ -55,10 +54,5 @@ public class PlayerInfoDaoImpl implements PlayerInfoDao {
             bean.setPlayerName(record.getStr("player_name"));
         }
         return bean;
-    }
-
-    public static void main(String[] args) {
-        JFinalUtils.initJFinalConfig();
-        dao.deletePlayer(17);
     }
 }

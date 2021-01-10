@@ -41,7 +41,7 @@ public class BagDaoImpl implements BagDao {
     }
 
     @Override
-    public void updatePlayerItem(PlayerItemBean item) {
+    public void updateSelective(PlayerItemBean item) {
         Record record = Db.findFirst("select * from player_item where player_id = ? and item_id = ?", item.getPlayerId(), item.getItemId());
         record.set("num", item.getNum());
         Db.update("player_item", "player_id", record);

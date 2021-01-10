@@ -2,8 +2,8 @@ package org.george.item.config.impl;
 
 import org.george.item.config.ItemConfig;
 import org.george.item.config.bean.ItemInfoBean;
-import org.george.pojo.CSVFormatException;
-import org.george.util.NumUtils;
+import org.george.item.pojo.CSVFormatException;
+import org.george.item.uitl.NumUtils;
 
 import java.io.*;
 import java.util.HashMap;

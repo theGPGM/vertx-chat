@@ -1,22 +1,18 @@
 package org.george.cmd.model.impl;
 
 import org.george.cmd.cache.CmdCache;
+import org.george.cmd.config.CmdDescConfig;
+import org.george.cmd.config.bean.CmdDescConfigBean;
 import org.george.cmd.model.CmdModel;
 import org.george.cmd.model.pojo.CmdMessageResult;
-import org.george.config.bean.CmdDescConfigBean;
 import org.george.hall.model.PlayerModel;
-import org.george.core.pojo.Message;
-import org.george.core.pojo.Messages;
-import org.george.config.CmdDescConfig;
-import org.george.util.JedisPool;
-import org.george.util.ThreadLocalJedisUtils;
-import redis.clients.jedis.Jedis;
+import org.george.cmd.pojo.Message;
+import org.george.cmd.pojo.Messages;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 public class CmdModelImpl implements CmdModel {
 
@@ -33,46 +29,6 @@ public class CmdModelImpl implements CmdModel {
     private PlayerModel playerModel = PlayerModel.getInstance();
 
     private CmdDescConfig cmdDescConfig = CmdDescConfig.getInstance();
-
-    @Override
-    public void loadCmdProperties(Properties properties) {
-        for(String cmd : properties.stringPropertyNames()){
-            String cmdClazz = properties.getProperty(cmd);
-            try {
-                String[] split = cmdClazz.split("\\.");
-                String m = split[split.length - 1];
-
-                StringBuilder sb = new StringBuilder();
-                for(int i = 0; i < split.length - 1; i++){
-                    if(i == split.length - 2){
-                        sb.append(split[i]);
-                    }else{
-                        sb.append(split[i]);
-                        sb.append(".");
-                    }
-                }
-
-                Method method = Class.forName(sb.toString()).getDeclaredMethod(m, String[].class);
-                cmdCache.addCmdClassObj(cmd, Class.forName(sb.toString()).newInstance());
-                cmdCache.addCmdMethod(cmd, method);
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    @Override
-    public void loadCmdDescriptionProperties(Properties cmdDescriptionProperties) {
-        for(String key : cmdDescriptionProperties.stringPropertyNames()){
-            cmdDescConfig.addCmdDescription(key, cmdDescriptionProperties.getProperty(key));
-        }
-    }
 
     /**
      * 执行完用户的命令之后将消息返回给用户
@@ -94,8 +50,6 @@ public class CmdModelImpl implements CmdModel {
             Method method = cmdCache.getCmdMethod(cmd);
             Object cmdObj = cmdCache.getCmdClassObj(cmd);
 
-            Jedis jedis = org.george.util.JedisPool.getJedis();
-            ThreadLocalJedisUtils.addJedis(jedis);
             try{
                  if("login".equals(cmd) || "register".equals(cmd)){
 
@@ -142,8 +96,7 @@ public class CmdModelImpl implements CmdModel {
                      }
                      sb.append("============================================================");
                      list.add(new CmdMessageResult(hId, sb.toString()));
-                 }
-                 else if(method == null || cmdObj == null){
+                 } else if(method == null || cmdObj == null){
                      // 没有的命令
                      list.add(new CmdMessageResult(hId, "无此命令"));
                  } else{
@@ -165,8 +118,6 @@ public class CmdModelImpl implements CmdModel {
                 e.printStackTrace();
             } catch (InvocationTargetException e) {
                 e.printStackTrace();
-            } finally {
-                JedisPool.returnJedis(jedis);
             }
         }
         return list;

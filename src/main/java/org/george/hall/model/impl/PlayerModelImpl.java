@@ -3,10 +3,11 @@ package org.george.hall.model.impl;
 import org.george.hall.cache.PlayerInfoCache;
 
 import org.george.hall.cache.bean.PlayerInfoCacheBean;
-import org.george.hall.dao.PlayerInfoDao;
-import org.george.hall.dao.bean.PlayerInfoBean;
 import org.george.hall.model.PlayerModel;
 import org.george.hall.model.pojo.PlayerResult;
+import org.george.hall.uitl.JedisPool;
+import org.george.hall.uitl.ThreadLocalJedisUtils;
+import redis.clients.jedis.Jedis;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,28 +30,46 @@ public class PlayerModelImpl implements PlayerModel {
 
     @Override
     public PlayerResult getPlayerByPlayerId(Integer playerId) {
-        PlayerInfoCacheBean cacheBean = playerInfoCache.loadPlayerByPlayerId(playerId);
-        if(cacheBean == null){
-            return null;
-        }else{
-            return cacheBean2PlayerResult(cacheBean);
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try{
+            PlayerInfoCacheBean cacheBean = playerInfoCache.loadPlayerByPlayerId(playerId);
+            if(cacheBean == null){
+                return null;
+            }else{
+                return cacheBean2PlayerResult(cacheBean);
+            }
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
     }
 
     @Override
     public void updatePlayerHP(Integer playerId, Integer hp) {
-        PlayerInfoCacheBean cacheBean = new PlayerInfoCacheBean();
-        cacheBean.setPlayerId(playerId);
-        cacheBean.setHp(hp);
-        playerInfoCache.updateSelective(cacheBean);
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try {
+            PlayerInfoCacheBean cacheBean = new PlayerInfoCacheBean();
+            cacheBean.setPlayerId(playerId);
+            cacheBean.setHp(hp);
+            playerInfoCache.updateSelective(cacheBean);
+        }finally {
+            JedisPool.returnJedis(jedis);
+        }
     }
 
     @Override
     public void updatePlayerGold(Integer playerId, Integer gold) {
-        PlayerInfoCacheBean cacheBean = new PlayerInfoCacheBean();
-        cacheBean.setPlayerId(playerId);
-        cacheBean.setGold(gold);
-        playerInfoCache.updateSelective(cacheBean);
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try {
+            PlayerInfoCacheBean cacheBean = new PlayerInfoCacheBean();
+            cacheBean.setPlayerId(playerId);
+            cacheBean.setGold(gold);
+            playerInfoCache.updateSelective(cacheBean);
+        }finally {
+            JedisPool.returnJedis(jedis);
+        }
     }
 
     private PlayerResult cacheBean2PlayerResult(PlayerInfoCacheBean bean){
@@ -65,13 +84,19 @@ public class PlayerModelImpl implements PlayerModel {
     @Override
     public boolean deductionNotify(Integer playerId, Integer num) {
 
-        PlayerInfoCacheBean cacheBean = playerInfoCache.loadPlayerByPlayerId(playerId);
-        if(cacheBean.getGold() < num){
-            return false;
-        }else{
-            cacheBean.setGold(cacheBean.getGold() - num);
-            playerInfoCache.updateSelective(cacheBean);
-            return true;
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try{
+            PlayerInfoCacheBean cacheBean = playerInfoCache.loadPlayerByPlayerId(playerId);
+            if(cacheBean.getGold() < num){
+                return false;
+            }else{
+                cacheBean.setGold(cacheBean.getGold() - num);
+                playerInfoCache.updateSelective(cacheBean);
+                return true;
+            }
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
     }
 

@@ -4,19 +4,20 @@ import org.george.auction.DeductionHandler;
 import org.george.auction.DeliveryHandler;
 import org.george.auction.cache.AuctionCache;
 import org.george.auction.cache.bean.AuctionCacheBean;
-import org.george.auction.dao.AuctionDao;
-import org.george.auction.dao.bean.AuctionBean;
-import org.george.config.AuctionConfig;
-import org.george.config.bean.AuctionInfoBean;
+import org.george.auction.config.AuctionConfig;
+import org.george.auction.config.bean.AuctionInfoBean;
+import org.george.auction.util.JedisPool;
+import org.george.auction.util.NumUtils;
+import org.george.auction.util.RedisLockUtils;
+import org.george.auction.util.ThreadLocalJedisUtils;
 import org.george.hall.model.pojo.PlayerResult;
 import org.george.item.model.ItemModel;
 import org.george.auction.pojo.DeductionTypeEnum;
-import org.george.core.pojo.Message;
-import org.george.core.pojo.Messages;
+import org.george.cmd.pojo.Message;
+import org.george.cmd.pojo.Messages;
 import org.george.item.model.pojo.ItemResult;
-import org.george.util.NumUtils;
-import org.george.util.RedisLockUtils;
 import org.george.hall.model.PlayerModel;
+import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +27,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class AuctionCmds {
 
     private AuctionCache auctionCache = AuctionCache.getInstance();
-
-    private AuctionDao auctionDao = AuctionDao.getInstance();
 
     private PlayerModel playerModel = PlayerModel.getInstance();
 
@@ -46,85 +45,59 @@ public class AuctionCmds {
 
         List<Message> list = new ArrayList<>();
         String userId = args[0];
-        if(args.length != 3){
-            list.add(new Message(userId, "输入格式错误"));
-        }else if(!NumUtils.checkDigit(args[1]) || !NumUtils.checkDigit(args[2])){
-            list.add(new Message(userId, "输入格式错误"));
-        }else{
-            // 判断是否需要先刷新商店
-            if(auctionCache.timestampExpired()){
-                if(flag.compareAndSet(false, true)){
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try{
+            if(args.length != 3){
+                list.add(new Message(userId, "输入格式错误"));
+            } else if(!NumUtils.checkDigit(args[1]) || !NumUtils.checkDigit(args[2])){
+                list.add(new Message(userId, "输入格式错误"));
+            } else if(!isAuctionsRefresh()){
+                list.add(new Message(userId, "拍卖行正在刷新中，请稍后再试"));
+            } else if(Integer.parseInt(args[2]) <= 0){
+                list.add(new Message(userId, "输入格式错误"));
+            } else if(!existsAuction(Integer.parseInt(args[1]))){
+                list.add(new Message(userId, "购买商品不存在"));
+            } else{
 
-                    // 刷新商店
-                    refreshShop();
-
-                    // 添加时间戳
-                    auctionCache.addTimeStamp();
-                    flag.set(false);
-                }else{
-                    list.add(new Message(userId, "拍卖行正在刷新中，请稍后再试"));
-                    return new Messages(list);
+                String requestId = UUID.randomUUID().toString();
+                while(true){
+                    // 加锁，10 秒过期
+                    boolean locked = RedisLockUtils.tryLock("buy_auction", requestId, 10);
+                    if(locked){
+                        break;
+                    }
                 }
-            }
 
-            String requestId = UUID.randomUUID().toString();
-            int count = 0;
-            boolean locked = false;
-            while(true){
-                // 加锁，10 秒过期
-                locked = RedisLockUtils.tryLock("buy_auction", requestId, 10);
-                if(locked){
-                    break;
-                }
-                // 尝试 10 次
-                if(count > 10){
-                    break;
-                }
-                count++;
-            }
-
-            if(locked){
                 try{
                     Integer auctionId = Integer.parseInt(args[1]);
                     Integer buyNum = Integer.parseInt(args[2]);
                     AuctionCacheBean auctionCacheBean = auctionCache.getAuction(auctionId);
                     PlayerResult player = playerModel.getPlayerByPlayerId(Integer.parseInt(userId));
 
-                    if(buyNum <= 0){
-                        list.add(new Message(userId, "输入格式错误"));
-                    }else if(auctionCacheBean == null){
-                        list.add(new Message(userId, "购买商品不存在"));
-                    }else if(auctionCacheBean.getNum() < buyNum){
+                    if(auctionCache.getAuction(Integer.parseInt(args[1])).getNum() < Integer.parseInt(args[2])){
                         list.add(new Message(userId, "库存不足"));
+                    } else if(!DeductionHandler.deductionHandle(auctionCacheBean.getDeductionType(), player.getPlayerId(), buyNum * auctionCacheBean.getCost())){
+                        list.add(new Message(userId, "扣减操作失败"));
                     } else {
 
-                        if(!DeductionHandler.deductionHandle(auctionCacheBean.getDeductionType(), player.getPlayerId(), buyNum * auctionCacheBean.getCost())){
-                            list.add(new Message(userId, "扣减操作失败"));
+                        DeliveryHandler.handle(auctionCacheBean.getAuctionType(), player.getPlayerId(), auctionCacheBean.getAuctionId(), buyNum);
 
-                        }else{
-                            DeliveryHandler.handle(auctionCacheBean.getAuctionType(), player.getPlayerId(), auctionCacheBean.getAuctionId(), buyNum);
+                        // 更新拍卖会数据
+                        AuctionCacheBean cacheBean = new AuctionCacheBean();
+                        cacheBean.setAuctionId(auctionCacheBean.getAuctionId());
+                        cacheBean.setNum(auctionCacheBean.getNum() - buyNum);
+                        auctionCache.updateSelective(cacheBean);
 
-                            // 更新拍卖会数据
-                            AuctionCacheBean cacheBean = new AuctionCacheBean();
-                            cacheBean.setAuctionId(auctionCacheBean.getAuctionId());
-                            cacheBean.setNum(auctionCacheBean.getNum() - buyNum);
-                            auctionCache.updateSelective(cacheBean);
-
-                            AuctionBean bean = new AuctionBean();
-                            bean.setAuctionId(auctionId);
-                            bean.setNum(auctionCacheBean.getNum() - buyNum);
-                            auctionDao.updateSelective(bean);
-
-                            list.add(new Message(userId, "购买成功"));
-                        }
+                        list.add(new Message(userId, "购买成功"));
                     }
                 }finally {
                     // 解锁
                     RedisLockUtils.releaseLock("buy_auction", requestId);
                 }
-            }else{
-                list.add(new Message(userId, "系统繁忙，请稍候重试"));
             }
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
         return new Messages(list);
     }
@@ -132,50 +105,21 @@ public class AuctionCmds {
     public Messages showAuctions(String...args){
         List<Message> list = new ArrayList<>();
         String userId = args[0];
-        if(args.length != 1){
-            list.add(new Message(userId, "输入格式错误"));
-        }else{
-            // 判断是否需要先刷新商店
-            if(auctionCache.timestampExpired()){
-                // 由第一个玩家来刷新商店，其他玩家如果这时候进入就让他们等待一会
-                if(flag.compareAndSet(false, true)){
-                    // 刷新
-                    refreshShop();
-                    // 添加时间戳
-                    auctionCache.addTimeStamp();
-                    flag.set(false);
-                }else{
-                    list.add(new Message(userId, "拍卖行正在刷新中，请稍后再试"));
-                    return new Messages(list);
-                }
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try{
+            if(args.length != 1){
+                list.add(new Message(userId, "输入格式错误"));
+            }else if(!isAuctionsRefresh()){
+                list.add(new Message(userId, "拍卖行正在刷新中，请稍后再试"));
+            } else{
+                String msg = info2Msg(auctionCache.getAuctions());
+                list.add(new Message(userId, msg));
             }
-            String msg = info2Msg(auctionCache.getAuctions());
-            list.add(new Message(userId, msg));
+        }finally {
+           JedisPool.returnJedis(jedis);
         }
         return new Messages(list);
-    }
-
-    private void refreshShop(){
-
-        for(AuctionInfoBean infoBean : auctionConfig.getAllAuctionInfo()){
-            // 刷新
-            AuctionBean bean = new AuctionBean();
-            bean.setAuctionType(infoBean.getAuctionType());
-            bean.setAuctionId(infoBean.getAuctionId());
-            bean.setDeductionType(infoBean.getDeductionType());
-            bean.setNum(infoBean.getNum());
-            bean.setCost(infoBean.getCost());
-
-            AuctionCacheBean cacheBean = new AuctionCacheBean();
-            cacheBean.setAuctionType(infoBean.getAuctionType());
-            cacheBean.setAuctionId(infoBean.getAuctionId());
-            cacheBean.setDeductionType(infoBean.getDeductionType());
-            cacheBean.setNum(infoBean.getNum());
-            cacheBean.setCost(infoBean.getCost());
-
-            auctionCache.addAuctionItemCacheBean(cacheBean);
-            auctionDao.updateSelective(bean);
-        }
     }
 
     private String info2Msg(List<AuctionCacheBean> auctions){
@@ -211,5 +155,46 @@ public class AuctionCmds {
         }
         sb.append("====================================================================");
         return sb.toString();
+    }
+
+    private boolean isAuctionsRefresh(){
+        if(auctionCache.timestampExpired()){
+            if(flag.compareAndSet(false, true)){
+                // 刷新商店
+                refreshShop();
+
+                // 添加时间戳
+                auctionCache.addTimeStamp();
+                flag.set(false);
+                return true;
+            }else{
+                return false;
+            }
+        }else{
+            return true;
+        }
+    }
+
+    private void refreshShop(){
+
+
+        List<AuctionInfoBean> auctionInfo = auctionConfig.getAllAuctionInfo();
+        List<AuctionCacheBean> list = new ArrayList<>();
+        for(AuctionInfoBean infoBean : auctionInfo){
+            // 刷新
+            AuctionCacheBean cacheBean = new AuctionCacheBean();
+            cacheBean.setAuctionType(infoBean.getAuctionType());
+            cacheBean.setAuctionId(infoBean.getAuctionId());
+            cacheBean.setDeductionType(infoBean.getDeductionType());
+            cacheBean.setNum(infoBean.getNum());
+            cacheBean.setCost(infoBean.getCost());
+
+            list.add(cacheBean);
+        }
+        auctionCache.batchUpdateSelective(list);
+    }
+
+    private boolean existsAuction(Integer auctionId){
+        return auctionCache.getAuction(auctionId) != null;
     }
 }

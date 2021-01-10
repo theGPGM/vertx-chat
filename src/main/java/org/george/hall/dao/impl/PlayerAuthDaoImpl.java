@@ -5,7 +5,6 @@ import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import org.george.hall.dao.PlayerAuthDao;
 import org.george.hall.dao.bean.PlayerAuthBean;
-import org.george.util.JFinalUtils;
 
 public class PlayerAuthDaoImpl implements PlayerAuthDao {
 
@@ -55,10 +54,5 @@ public class PlayerAuthDaoImpl implements PlayerAuthDao {
     @Override
     public int deletePlayer(Integer playerId) {
         return Db.delete("delete from auth where player_id = ?", playerId);
-    }
-
-    public static void main(String[] args) {
-        JFinalUtils.initJFinalConfig();
-        dao.deletePlayer(17);
     }
 }

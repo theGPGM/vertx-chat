@@ -3,7 +3,10 @@ package org.george.dungeon_game.model.impl;
 import org.george.dungeon_game.cache.DungeonGameCache;
 import org.george.dungeon_game.cache.impl.DungeonGameCacheImpl;
 import org.george.dungeon_game.model.DungeonGameModel;
+import org.george.dungeon_game.util.JedisPool;
+import org.george.dungeon_game.util.ThreadLocalJedisUtils;
 import org.george.hall.model.PlayerModel;
+import redis.clients.jedis.Jedis;
 
 public class DungeonGameModelImpl implements DungeonGameModel {
 
@@ -21,11 +24,18 @@ public class DungeonGameModelImpl implements DungeonGameModel {
 
     @Override
     public void clientCloseNotify(String hId) {
-        String userId = playerModel.getUId(hId);
-        if(userId != null){
-            if(dungeonGameCache.playerAtGame(userId)){
-                dungeonGameCache.deletePlayer(userId);
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try{
+
+            String userId = playerModel.getUId(hId);
+            if(userId != null){
+                if(dungeonGameCache.playerAtGame(userId)){
+                    dungeonGameCache.deletePlayer(userId);
+                }
             }
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
     }
 }

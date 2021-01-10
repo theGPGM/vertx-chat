@@ -4,7 +4,6 @@ import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import org.george.auction.dao.AuctionDao;
 import org.george.auction.dao.bean.AuctionBean;
-import org.george.util.JFinalUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +32,40 @@ public class AuctionDaoImpl implements AuctionDao {
             beans.add(bean);
         }
         return beans;
+    }
+
+    @Override
+    public void batchUpdateSelective(List<AuctionBean> list) {
+        List<AuctionBean> beans = getAuctions();
+        for(AuctionBean bean : list){
+            for(AuctionBean old : beans){
+                if(bean.getAuctionType() != null){
+                    old.setAuctionType(bean.getAuctionType());
+                }
+                if(bean.getCost() != null){
+                    old.setCost(bean.getCost());
+                }
+                if(bean.getDeductionType() != null){
+                    old.setDeductionType(bean.getDeductionType());
+                }
+                if(bean.getNum() != null){
+                    old.setNum(bean.getNum());
+                }
+            }
+        }
+
+        List<Record> records = new ArrayList<>();
+        for(AuctionBean bean : beans){
+            Record record = new Record();
+            record.set("auction_id", bean.getAuctionId())
+                    .set("num", bean.getNum())
+                    .set("cost", bean.getCost())
+                    .set("auction_type", bean.getAuctionType())
+                    .set("deduction_type", bean.getDeductionType());
+
+            records.add(record);
+        }
+        Db.batchUpdate("auction", "auction_id", records, records.size());
     }
 
     @Override
@@ -80,11 +113,5 @@ public class AuctionDaoImpl implements AuctionDao {
             bean.setNum(record.getInt("num"));
         }
         return bean;
-    }
-
-    public static void main(String[] args) {
-        JFinalUtils.initJFinalConfig();
-        AuctionDaoImpl auctionDao = new AuctionDaoImpl();
-        System.out.println(auctionDao.getAuctions());
     }
 }

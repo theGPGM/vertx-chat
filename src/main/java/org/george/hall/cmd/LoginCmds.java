@@ -6,8 +6,8 @@ import org.george.hall.cache.bean.PlayerAuthCacheBean;
 import org.george.hall.model.PlayerModel;
 import org.george.hall.uitl.JedisPool;
 import org.george.hall.uitl.ThreadLocalJedisUtils;
-import org.george.core.pojo.Message;
-import org.george.core.pojo.Messages;
+import org.george.cmd.pojo.Message;
+import org.george.cmd.pojo.Messages;
 import org.george.hall.cache.PlayerInfoCache;
 import org.george.hall.cache.bean.PlayerInfoCacheBean;
 import org.slf4j.Logger;
@@ -82,8 +82,10 @@ public class LoginCmds {
             if(args == null || args.length != 2){
                 list.add(new Message(null, input_format_error));
             }else if(playerAuthCache.loadPlayerAuthCacheBeanByName(args[0]) == null){
+                // 用户名或密码错误
                 list.add(new Message(null, username_or_password_wrong));
             }else if(!args[1].equals(playerAuthCache.loadPlayerAuthCacheBeanByName(args[0]).getPassword())){
+                // 密码错误
                 list.add(new Message(null, username_or_password_wrong));
             } else{
 
@@ -115,6 +117,7 @@ public class LoginCmds {
             if(args == null || args.length != 2){
                 list.add(new Message(null, input_format_error));
             } else if(playerAuthCache.loadPlayerAuthCacheBeanByName(args[0]) != null){
+                // 存在用户
                 list.add(new Message(null, user_already_exists));
             } else{
                 String username = args[0];
@@ -126,10 +129,13 @@ public class LoginCmds {
                 cacheBean.setPassword(password);
                 playerAuthCache.addPlayer(cacheBean);
                 cacheBean = playerAuthCache.loadPlayerAuthCacheBeanByName(username);
+
                 // 添加用户信息
                 PlayerInfoCacheBean playerInfoCacheBean = new PlayerInfoCacheBean();
                 playerInfoCacheBean.setPlayerId(cacheBean.getPlayerId());
                 playerInfoCacheBean.setPlayerName(cacheBean.getPlayerName());
+                playerInfoCacheBean.setGold(0);
+                playerInfoCacheBean.setHp(100);
                 playerInfoCache.addPlayer(playerInfoCacheBean);
                 // 添加时间戳
                 playerInfoCache.addTimeStampIfNotExisting(cacheBean.getPlayerId());

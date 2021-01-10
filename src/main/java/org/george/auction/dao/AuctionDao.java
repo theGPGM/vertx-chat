@@ -9,6 +9,8 @@ public interface AuctionDao {
 
     List<AuctionBean> getAuctions();
 
+    void batchUpdateSelective(List<AuctionBean> list);
+
     void addAuctionItem(Integer itemId, Integer num);
 
     void updateSelective(AuctionBean bean);

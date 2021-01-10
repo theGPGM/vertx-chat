@@ -3,8 +3,8 @@ package org.george.dungeon_game.config.impl;
 import org.george.dungeon_game.config.DropItemConfig;
 import org.george.dungeon_game.config.ItemConfig;
 import org.george.dungeon_game.config.bean.DropItemInfoBean;
-import org.george.pojo.CSVFormatException;
-import org.george.util.NumUtils;
+import org.george.dungeon_game.pojo.CSVFormatException;
+import org.george.dungeon_game.util.NumUtils;
 
 import java.io.*;
 import java.util.ArrayList;

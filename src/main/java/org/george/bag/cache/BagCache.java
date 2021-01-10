@@ -11,7 +11,7 @@ public interface BagCache {
 
     void addPlayerItem(PlayerItemCacheBean item);
 
-    void updatePlayerItem(PlayerItemCacheBean item);
+    void updateSelective(PlayerItemCacheBean item);
 
     PlayerItemCacheBean getPlayerItem(Integer playerId, Integer itemId);
 

@@ -5,8 +5,8 @@ import org.george.chat.cache.RoomCache;
 import org.george.chat.util.JedisPool;
 import org.george.chat.util.NumUtils;
 import org.george.chat.util.ThreadLocalJedisUtils;
-import org.george.core.pojo.Message;
-import org.george.core.pojo.Messages;
+import org.george.cmd.pojo.Message;
+import org.george.cmd.pojo.Messages;
 import org.george.hall.model.PlayerModel;
 import org.george.hall.model.pojo.PlayerResult;
 import org.slf4j.Logger;
@@ -74,7 +74,7 @@ public class ChatCmds {
                 list.add(new Message(userId, input_format_error));
             } else if(!NumUtils.checkDigit(args[1])){
                 list.add(new Message(userId, chat_room_format_error));
-            } else if(!isRoomExists(args[1])){
+            } else if(isRoomExists(args[1])){
                 list.add(new Message(userId, chat_room_exists));
             } else{
                 roomCache.join(args[1], userId);
@@ -98,7 +98,7 @@ public class ChatCmds {
         try{
             if(args.length != 2){
                 list.add(new Message(userId, input_format_error));
-            } else if(NumUtils.checkDigit(args[1])){
+            } else if(!NumUtils.checkDigit(args[1])){
                 list.add(new Message(userId, chat_room_format_error));
             } else if(!isRoomExists(args[1])){
                 list.add(new Message(userId, chat_room_not_exists));
@@ -137,7 +137,7 @@ public class ChatCmds {
             if(args.length != 2){
                 Message msg =  new Message(userId, input_format_error);
                 list.add(msg);
-            } else if(NumUtils.checkDigit(args[1])){
+            } else if(!NumUtils.checkDigit(args[1])){
                 list.add(new Message(userId, chat_room_format_error));
             } else if(!isRoomExists(args[1])){
                 list.add(new Message(userId, chat_room_not_exists));
@@ -176,7 +176,7 @@ public class ChatCmds {
         try{
             if(args.length != 3){
                 list.add(new Message(userId,input_format_error));
-            }else if(NumUtils.checkDigit(args[1])){
+            }else if(!NumUtils.checkDigit(args[1])){
                 list.add(new Message(userId, chat_room_format_error));
             } else if(!isRoomExists(args[1])){
                 list.add(new Message(userId, chat_room_not_exists));

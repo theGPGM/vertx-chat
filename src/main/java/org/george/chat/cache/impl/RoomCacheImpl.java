@@ -2,7 +2,7 @@ package org.george.chat.cache.impl;
 
 
 import org.george.chat.cache.RoomCache;
-import org.george.util.ThreadLocalJedisUtils;
+import org.george.chat.util.ThreadLocalJedisUtils;
 import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;

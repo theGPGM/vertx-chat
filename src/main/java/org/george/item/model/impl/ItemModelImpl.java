@@ -8,6 +8,9 @@ import org.george.item.dao.ItemDao;
 import org.george.item.dao.bean.ItemBean;
 import org.george.item.model.ItemModel;
 import org.george.item.model.pojo.ItemResult;
+import org.george.item.uitl.JedisPool;
+import org.george.item.uitl.ThreadLocalJedisUtils;
+import redis.clients.jedis.Jedis;
 
 public class ItemModelImpl implements ItemModel {
 
@@ -23,25 +26,20 @@ public class ItemModelImpl implements ItemModel {
 
     private ItemCache itemCache = ItemCache.getInstance();
 
-    private ItemDao itemDao = ItemDao.getInstance();
-
     @Override
     public ItemResult getItemByItemId(Integer id) {
-        ItemResult result = null;
-        ItemCacheBean cacheBean = itemCache.getItemByItemId(id);
-        if(cacheBean != null){
-            result = cacheBean2ItemResult(cacheBean);
-        }else{
-            ItemBean itemBean = itemDao.getItemByItemId(id);
-            if(itemBean == null){
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try{
+            ItemCacheBean cacheBean = itemCache.getItemByItemId(id);
+            if(cacheBean == null){
                 return null;
             }else{
-                cacheBean = bean2CacheBean(itemBean);
-                itemCache.addItem(cacheBean);
-                result = cacheBean2ItemResult(cacheBean);
+                return cacheBean2ItemResult(cacheBean);
             }
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
-        return result;
     }
 
     private ItemResult cacheBean2ItemResult(ItemCacheBean bean){
@@ -50,14 +48,6 @@ public class ItemModelImpl implements ItemModel {
         result.setItemName(bean.getItemName());
         result.setDescription(bean.getDescription());
         return result;
-    }
-
-    private ItemCacheBean bean2CacheBean(ItemBean bean){
-        ItemCacheBean cacheBean = new ItemCacheBean();
-        cacheBean.setItemId(bean.getItemId());
-        cacheBean.setItemName(bean.getItemName());
-        cacheBean.setDescription(bean.getDescription());
-        return cacheBean;
     }
 
     @Override

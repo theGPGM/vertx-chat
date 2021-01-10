@@ -7,9 +7,7 @@ import org.george.hall.cache.PlayerInfoCache;
 import org.george.hall.cache.bean.PlayerInfoCacheBean;
 import org.george.hall.dao.PlayerInfoDao;
 import org.george.hall.dao.bean.PlayerInfoBean;
-import org.george.util.JFinalUtils;
-import org.george.util.JedisPool;
-import org.george.util.ThreadLocalJedisUtils;
+import org.george.hall.uitl.ThreadLocalJedisUtils;
 import redis.clients.jedis.Jedis;
 
 import java.io.IOException;
@@ -57,8 +55,8 @@ public class PlayerInfoInfoCacheImpl implements PlayerInfoCache {
             PlayerInfoBean bean = playerInfoDao.loadPlayerByPlayerId(playerId);
             cacheBean.setPlayerName(bean.getPlayerName());
             cacheBean.setPlayerId(bean.getPlayerId());
-            cacheBean.setGold(bean.getGold());
             cacheBean.setHp(bean.getHp());
+            cacheBean.setGold(bean.getGold());
 
             try {
                 jedis.set("playerInfo#" + playerId, objectMapper.writeValueAsString(cacheBean));
@@ -79,19 +77,20 @@ public class PlayerInfoInfoCacheImpl implements PlayerInfoCache {
 
             long cur = System.currentTimeMillis();
             int inc = (int) (cur - getTimeStamp(playerId)) / (1000 * 60 * 10);
-            if(cacheBean.getHp() + inc > 100){
-                cacheBean.setHp(100);
-            }else{
-                cacheBean.setHp(cacheBean.getHp() + inc);
+            if(inc > 0){
+                if(cacheBean.getHp() + inc > 100){
+                    cacheBean.setHp(100);
+                }else{
+                    cacheBean.setHp(cacheBean.getHp() + inc);
+                }
+                try {
+                    String newJson = objectMapper.writeValueAsString(cacheBean);
+                    jedis.set("playerInfo#" + playerId, newJson);
+                    jedis.set("player_timestamp#" + playerId, String.valueOf(System.currentTimeMillis()));
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                }
             }
-        }
-
-        try {
-            String newJson = objectMapper.writeValueAsString(cacheBean);
-            jedis.set("playerInfo#" + playerId, newJson);
-            jedis.set("player_timestamp#" + playerId, String.valueOf(System.currentTimeMillis()));
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
         }
         return cacheBean;
     }
@@ -111,6 +110,7 @@ public class PlayerInfoInfoCacheImpl implements PlayerInfoCache {
         String json = jedis.get("playerInfo#" + cacheBean.getPlayerId());
         try {
             PlayerInfoCacheBean old = objectMapper.readValue(json, PlayerInfoCacheBean.class);
+            PlayerInfoCacheBean newCacheBean = new PlayerInfoCacheBean();
             if(cacheBean.getPlayerName() == null){
                 cacheBean.setPlayerName(old.getPlayerName());
             }
@@ -118,7 +118,7 @@ public class PlayerInfoInfoCacheImpl implements PlayerInfoCache {
                 cacheBean.setHp(old.getHp());
             }
             if(cacheBean.getGold() == null){
-                cacheBean.setHp(old.getGold());
+                cacheBean.setGold(old.getGold());
             }
             String newJson = objectMapper.writeValueAsString(cacheBean);
             jedis.set("playerInfo#" + cacheBean.getPlayerId(), newJson);
@@ -139,13 +139,5 @@ public class PlayerInfoInfoCacheImpl implements PlayerInfoCache {
     public Long getTimeStamp(Integer playerId) {
         Jedis jedis = ThreadLocalJedisUtils.getJedis();
         return Long.parseLong(jedis.get("player_timestamp#" + playerId));
-    }
-
-    public static void main(String[] args) {
-        Jedis jedis = JedisPool.getJedis();
-        ThreadLocalJedisUtils.addJedis(jedis);
-        JFinalUtils.initJFinalConfig();
-
-        System.out.println(instance.loadPlayerByPlayerId(19));
     }
 }
