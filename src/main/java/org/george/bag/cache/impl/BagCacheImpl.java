@@ -28,12 +28,12 @@ public class BagCacheImpl implements BagCache {
     private BagDao bagDao = BagDao.getInstance();
 
     @Override
-    public List<PlayerItemCacheBean> getAllPlayerItem(Integer playerId) {
+    public List<PlayerItemCacheBean> getAll(Integer playerId) {
         Jedis jedis = ThreadLocalJedisUtils.getJedis();
         ObjectMapper objectMapper = new ObjectMapper();
         if(!jedis.exists("player_items#"+ playerId + "_items")){
 
-            List<PlayerItemBean> beans = bagDao.getPlayerItems(playerId);
+            List<PlayerItemBean> beans = bagDao.getAll(playerId);
             List<PlayerItemCacheBean> cacheBeans = new ArrayList<>();
             for(PlayerItemBean bean : beans){
                 PlayerItemCacheBean cacheBean = new PlayerItemCacheBean();
@@ -63,7 +63,7 @@ public class BagCacheImpl implements BagCache {
     }
 
     @Override
-    public void addPlayerItem(PlayerItemCacheBean item) {
+    public void add(PlayerItemCacheBean item) {
         Jedis jedis = ThreadLocalJedisUtils.getJedis();
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -72,7 +72,7 @@ public class BagCacheImpl implements BagCache {
         bean.setPlayerId(item.getPlayerId());
         bean.setItemId(item.getItemId());
         bean.setNum(item.getNum());
-        bagDao.addPlayerItem(bean);
+        bagDao.add(bean);
 
         // 添加缓存
         String json = jedis.get("player_items#"+ item.getPlayerId());
@@ -119,8 +119,8 @@ public class BagCacheImpl implements BagCache {
     }
 
     @Override
-    public PlayerItemCacheBean getPlayerItem(Integer playerId, Integer itemId) {
-        List<PlayerItemCacheBean> cacheBeans = getAllPlayerItem(playerId);
+    public PlayerItemCacheBean get(Integer playerId, Integer itemId) {
+        List<PlayerItemCacheBean> cacheBeans = getAll(playerId);
         for(PlayerItemCacheBean cacheBean : cacheBeans){
             if(cacheBean.getItemId().equals(itemId)){
                 return cacheBean;
@@ -130,11 +130,11 @@ public class BagCacheImpl implements BagCache {
     }
 
     @Override
-    public void deletePlayerItem(Integer playerId, Integer itemId) {
+    public void delete(Integer playerId, Integer itemId) {
         Jedis jedis = ThreadLocalJedisUtils.getJedis();
         ObjectMapper objectMapper = new ObjectMapper();
         // 更新数据库
-        bagDao.deletePlayerItem(playerId, itemId);
+        bagDao.delete(playerId, itemId);
 
         // 更新缓存
         String json = jedis.get("player_items#"+ playerId);

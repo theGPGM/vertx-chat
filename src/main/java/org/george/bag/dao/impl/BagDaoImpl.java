@@ -19,14 +19,14 @@ public class BagDaoImpl implements BagDao {
     }
 
     @Override
-    public void addPlayerItem(PlayerItemBean item) {
+    public void add(PlayerItemBean item) {
         Record record = new Record();
         record.set("player_id", item.getPlayerId()).set("item_id", item.getItemId()).set("num", item.getNum());
         Db.save("player_item", "player_id", record);
     }
 
     @Override
-    public List<PlayerItemBean> getPlayerItems(Integer playerId) {
+    public List<PlayerItemBean> getAll(Integer playerId) {
         List<PlayerItemBean> res = new ArrayList<>();
         List<Object[]> list = Db.query("select player_id, item_id, num from player_item where player_id = ?", playerId);
         for(Object[] o : list){
@@ -48,12 +48,12 @@ public class BagDaoImpl implements BagDao {
     }
 
     @Override
-    public void deletePlayerItem(Integer playerId, Integer itemId) {
+    public void delete(Integer playerId, Integer itemId) {
         Db.delete("delete from player_item where player_id = ? and item_id = ?", playerId, itemId);
     }
 
     @Override
-    public PlayerItemBean getPlayerItem(Integer playerId, Integer itemId) {
+    public PlayerItemBean get(Integer playerId, Integer itemId) {
         PlayerItemBean bean = null;
         Record record = Db.findFirst("select * from player_item where player_id = ? and item_id = ?", playerId, itemId);
         if(record != null){

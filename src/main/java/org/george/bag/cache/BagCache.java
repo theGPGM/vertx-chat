@@ -7,15 +7,15 @@ import java.util.List;
 
 public interface BagCache {
 
-    List<PlayerItemCacheBean> getAllPlayerItem(Integer playerId);
+    List<PlayerItemCacheBean> getAll(Integer playerId);
 
-    void addPlayerItem(PlayerItemCacheBean item);
+    void add(PlayerItemCacheBean item);
 
     void updateSelective(PlayerItemCacheBean item);
 
-    PlayerItemCacheBean getPlayerItem(Integer playerId, Integer itemId);
+    PlayerItemCacheBean get(Integer playerId, Integer itemId);
 
-    void deletePlayerItem(Integer playerId, Integer itemId);
+    void delete(Integer playerId, Integer itemId);
 
     static BagCache getInstance(){
         return BagCacheImpl.getInstance();

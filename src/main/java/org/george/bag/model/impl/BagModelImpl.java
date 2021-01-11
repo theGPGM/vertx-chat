@@ -31,7 +31,7 @@ public class BagModelImpl implements BagModel {
         try{
 
             List<PlayerItemResult> results = new ArrayList<>();
-            List<PlayerItemCacheBean> list = bagCache.getAllPlayerItem(playerId);
+            List<PlayerItemCacheBean> list = bagCache.getAll(playerId);
 
             if(list == null || list.size() == 0){
                 return new ArrayList<>();
@@ -57,7 +57,7 @@ public class BagModelImpl implements BagModel {
         ThreadLocalJedisUtils.addJedis(jedis);
         try{
             PlayerItemCacheBean cacheBean = playerItemResult2CacheBean(item);
-            bagCache.addPlayerItem(cacheBean);
+            bagCache.add(cacheBean);
         }finally {
             JedisPool.returnJedis(jedis);
         }
@@ -80,7 +80,7 @@ public class BagModelImpl implements BagModel {
         Jedis jedis = JedisPool.getJedis();
         ThreadLocalJedisUtils.addJedis(jedis);
         try{
-            PlayerItemCacheBean cacheBean = bagCache.getPlayerItem(playerId, itemId);
+            PlayerItemCacheBean cacheBean = bagCache.get(playerId, itemId);
             if(cacheBean == null){
                 return null;
             }

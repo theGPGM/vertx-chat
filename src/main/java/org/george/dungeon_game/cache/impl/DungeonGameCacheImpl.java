@@ -4,6 +4,9 @@ import org.george.dungeon_game.cache.DungeonGameCache;
 
 import org.george.dungeon_game.cache.PlayerBuyHpRecordCache;
 import org.george.dungeon_game.util.CalendarUtils;
+import org.george.dungeon_game.util.JedisPool;
+import org.george.dungeon_game.util.ThreadLocalJedisUtils;
+import redis.clients.jedis.Jedis;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -39,21 +42,33 @@ public class DungeonGameCacheImpl implements DungeonGameCache {
 
     @Override
     public Integer getBuyHpCount(Integer playerId) {
-        Integer count = playerBuyHpRecordCache.getBuyHpCount(playerId);
-        if(count == null){
-            playerBuyHpRecordCache.addBuyHpCount(playerId, CalendarUtils.getNextEarlyMorningTime());
-            return 0;
-        }else{
-            return count;
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try{
+            Integer count = playerBuyHpRecordCache.getBuyHpCount(playerId);
+            if(count == null){
+                playerBuyHpRecordCache.addBuyHpCount(playerId, CalendarUtils.getNextEarlyMorningTime());
+                return 0;
+            }else{
+                return count;
+            }
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
     }
 
     @Override
     public void incrBuyHpCount(Integer playerId) {
-        Integer count = playerBuyHpRecordCache.getBuyHpCount(playerId);
-        if(count == null){
-            playerBuyHpRecordCache.addBuyHpCount(playerId, CalendarUtils.getNextEarlyMorningTime());
+        Jedis jedis = JedisPool.getJedis();
+        ThreadLocalJedisUtils.addJedis(jedis);
+        try {
+            Integer count = playerBuyHpRecordCache.getBuyHpCount(playerId);
+            if (count == null) {
+                playerBuyHpRecordCache.addBuyHpCount(playerId, CalendarUtils.getNextEarlyMorningTime());
+            }
+            playerBuyHpRecordCache.incrBuyHpCount(playerId);
+        }finally {
+            JedisPool.returnJedis(jedis);
         }
-        playerBuyHpRecordCache.incrBuyHpCount(playerId);
     }
 }

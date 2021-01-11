@@ -22,13 +22,13 @@ public class GameCacheImpl implements GameCache {
   }
 
   @Override
-  public void addGameUser(String roomId, String userId){
+  public void add(String roomId, String userId){
     Jedis jedis = ThreadLocalJedisUtils.getJedis();
     jedis.sadd("room_game_playerIds#" + roomId, userId);
   }
 
   @Override
-  public List<String> getAllPlayerInRoom(String roomId){
+  public List<String> getAllRoomPlayer(String roomId){
     Jedis jedis = ThreadLocalJedisUtils.getJedis();
     Set<String> set = jedis.smembers("room_game_playerIds#" + roomId);
     return new ArrayList<>(set);
@@ -96,6 +96,6 @@ public class GameCacheImpl implements GameCache {
     Jedis jedis = JedisPool.getJedis();
     ThreadLocalJedisUtils.addJedis(jedis);
 
-    getInstance().addGameUser("123", "19");
+    getInstance().add("123", "19");
   }
 }

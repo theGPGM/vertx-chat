@@ -8,15 +8,15 @@ import java.util.List;
 
 public interface BagDao {
 
-    void addPlayerItem(PlayerItemBean item);
+    void add(PlayerItemBean item);
 
-    List<PlayerItemBean> getPlayerItems(Integer player);
+    List<PlayerItemBean> getAll(Integer player);
 
     void updateSelective(PlayerItemBean item);
 
-    void deletePlayerItem(Integer playerId, Integer itemId);
+    void delete(Integer playerId, Integer itemId);
 
-    PlayerItemBean getPlayerItem(Integer playerId, Integer itemId);
+    PlayerItemBean get(Integer playerId, Integer itemId);
 
     static BagDao getInstance(){
         return BagDaoImpl.getInstance();

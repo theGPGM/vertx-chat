@@ -128,15 +128,16 @@ public class LoginCmds {
                 cacheBean.setPlayerName(username);
                 cacheBean.setPassword(password);
                 playerAuthCache.addPlayer(cacheBean);
-                cacheBean = playerAuthCache.loadPlayerAuthCacheBeanByName(username);
 
                 // 添加用户信息
+                cacheBean = playerAuthCache.loadPlayerAuthCacheBeanByName(username);
                 PlayerInfoCacheBean playerInfoCacheBean = new PlayerInfoCacheBean();
                 playerInfoCacheBean.setPlayerId(cacheBean.getPlayerId());
                 playerInfoCacheBean.setPlayerName(cacheBean.getPlayerName());
                 playerInfoCacheBean.setGold(0);
                 playerInfoCacheBean.setHp(100);
                 playerInfoCache.addPlayer(playerInfoCacheBean);
+
                 // 添加时间戳
                 playerInfoCache.addTimeStampIfNotExisting(cacheBean.getPlayerId());
 
@@ -192,6 +193,8 @@ public class LoginCmds {
             } else {
                 playerModel.logout(args[0]);
                 list.add(new Message(null,quit_login_success));
+
+                logger.info("用户:{}登出", args[0]);
             }
         }finally {
             JedisPool.returnJedis(jedis);

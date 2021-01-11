@@ -161,7 +161,7 @@ public class ChatGameCmds {
                         break;
                     }
                 }
-                gameCache.addGameUser(roomId, userId);
+                gameCache.add(roomId, userId);
                 gameCache.addUserAction(roomId, userId, "" + action, expired_second);
 
                 logger.info("用户:{}参加房间:[{}]中的猜拳游戏", userId, roomId);

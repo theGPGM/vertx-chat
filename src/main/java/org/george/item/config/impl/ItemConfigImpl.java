@@ -21,16 +21,15 @@ public class ItemConfigImpl implements ItemConfig {
         return instance;
     }
 
-    Set<Integer> itemIdSet = new HashSet<>();
+    private static Set<Integer> itemIdSet = new HashSet<>();
     
-    Set<String> itemNameSet = new HashSet<>();
+    private static Set<String> itemNameSet = new HashSet<>();
 
-    Map<Integer, ItemInfoBean> map = new HashMap<>();
+    private static Map<Integer, ItemInfoBean> map = new HashMap<>();
     
-    @Override
-    public void loadItemInfo(String fileName) {
+    static {
 
-        File file = new File(fileName);
+        File file = new File("src/main/java/org/george/item/config/csv/item.csv");
         if(file == null || !file.isFile()){
             throw new CSVFormatException("文件错误");
         }
