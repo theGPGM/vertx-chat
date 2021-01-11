@@ -1,12 +1,12 @@
 package org.george.hall.cache.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.george.hall.cache.PlayerAuthCache;
 import org.george.hall.cache.bean.PlayerAuthCacheBean;
 import org.george.hall.dao.PlayerAuthDao;
 import org.george.hall.dao.bean.PlayerAuthBean;
-import org.george.hall.uitl.JedisPool;
 import org.george.hall.uitl.ThreadLocalJedisUtils;
 import redis.clients.jedis.Jedis;
 

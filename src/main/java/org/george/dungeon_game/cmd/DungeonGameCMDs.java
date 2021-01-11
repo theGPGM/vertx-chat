@@ -136,7 +136,7 @@ public class DungeonGameCMDs {
                     cacheBean = new PlayerLevelCacheBean();
                     cacheBean.setPlayerId(playerId);
                     cacheBean.setLoseCount(0);
-                    cacheBean.setLevel(0);
+                    cacheBean.setLevel(1);
                     // 添加缓存
                     playerLevelCache.addPlayerLevel(cacheBean);
                 }
@@ -190,7 +190,7 @@ public class DungeonGameCMDs {
                 int result = judge(levelBeanInfo.getWinningRate());
                 // 玩家胜利 || 十次保底赢
                 if (result == 1 || cacheBean.getLoseCount() == must_win_lose_count) {
-                    for(Message msg : win(player, cacheBean)){
+                    for(Message msg : settleWin(player, cacheBean)){
                         list.add(msg);
                     }
                 } else {
@@ -274,7 +274,7 @@ public class DungeonGameCMDs {
         return new Messages(list);
     }
 
-    public Messages quitGame(String...args){
+    public Messages exitGame(String...args){
 
         List<Message> list = new ArrayList<>();
         Jedis jedis = JedisPool.getJedis();
@@ -289,6 +289,8 @@ public class DungeonGameCMDs {
                 // 玩家退出关卡
                 dungeonGameCache.deletePlayer(userId);
                 list.add(new Message(userId, quit_game));
+
+                logger.info("玩家:{} 退出地下城冒险游戏", userId);
             }
         }finally {
             JedisPool.returnJedis(jedis);
@@ -369,12 +371,14 @@ public class DungeonGameCMDs {
                     pItem.setPlayerId(playerId);
                     bagModel.updatePlayerItem(pItem);
 
+                    for(Message msg : settleWin(player, cacheBean)){
+                        list.add(msg);
+                    }
+
                     ItemResult i = itemModel.getItemByItemId(pItem.getItemId());
                     list.add(new Message("" + player.getPlayerId(), "您使用了道具: " + i.getItemName()));
 
-                    for(Message msg : win(player, cacheBean)){
-                        list.add(msg);
-                    }
+                    logger.info("玩家:{}使用道具:{}", userId, itemId);
                 }
             }
         }finally {
@@ -383,7 +387,7 @@ public class DungeonGameCMDs {
         return new Messages(list);
     }
 
-    private List<Message> win(PlayerResult player, PlayerLevelCacheBean cacheBean){
+    private List<Message> settleWin(PlayerResult player, PlayerLevelCacheBean cacheBean){
         List<Message> list = new ArrayList<>();
         list.add(new Message("" + player.getPlayerId(), win));
         list.add(new Message("" + player.getPlayerId(), get_a_gold));
@@ -395,18 +399,13 @@ public class DungeonGameCMDs {
         for(DropItemInfoBean dii : dropItemInfos){
             if(dropItem(dii.getRate())){
                 boolean flag = false;
-                List<PlayerItemResult> items = bagModel.getAllPlayerItems(playerId);
-                if(items == null || items.size() == 0){
-                    continue;
-                }else{
-                    for(PlayerItemResult item : items){
-                        // 拥有该道具
-                        if(item.getItemId().equals(dii.getItemId())){
-                            item.setNum(item.getNum() + 1);
-                            item.setPlayerId(playerId);
-                            bagModel.updatePlayerItem(item);
-                            flag = true;
-                        }
+                for(PlayerItemResult item : bagModel.getAllPlayerItems(playerId)){
+                    // 拥有该道具
+                    if(item.getItemId().equals(dii.getItemId())){
+                        item.setNum(item.getNum() + 1);
+                        item.setPlayerId(playerId);
+                        bagModel.updatePlayerItem(item);
+                        flag = true;
                     }
                 }
 
@@ -422,6 +421,8 @@ public class DungeonGameCMDs {
 
                 ItemInfoBean itemInfoBean = itemConfig.getItemInfoBean(dii.getItemId());
                 list.add(new Message("" + player.getPlayerId(), get_a_item + itemInfoBean.getItemName() + ", " +  itemInfoBean.getDescription()));
+
+                logger.info("用户:{} 获得道具:{}", player.getPlayerId(), dii.getItemId());
             }
         }
 
@@ -430,6 +431,9 @@ public class DungeonGameCMDs {
         cacheBean.setLoseCount(0);
         playerLevelCache.updatePlayerLevelSelective(cacheBean);
         dungeonGameCache.deletePlayer("" + playerId);
+
+        logger.info("玩家:{}获得胜利", playerId);
+
         return list;
     }
 

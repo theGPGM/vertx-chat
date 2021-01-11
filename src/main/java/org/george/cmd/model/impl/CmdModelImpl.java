@@ -66,18 +66,15 @@ public class CmdModelImpl implements CmdModel {
                         if(userId == null) {
                             // 登录失败
                             list.add(new CmdMessageResult(hId, msg.getMessage()));
-                            return list;
-                        }
-
-                        // 认证成功
-                        if(playerModel.getHId(userId) != null){
+                        } else if(playerModel.getHId(userId) != null){
                             // 账户异地登录
-                            String userHId = playerModel.getHId(userId);
                             playerModel.logout(userId);
+                            playerModel.addUIdAndHId(userId, hId);
+                            String userHId = playerModel.getHId(userId);
                             list.add(new CmdMessageResult(userHId, "账户异地登录"));
                             list.add(new CmdMessageResult(hId, msg.getMessage()));
-                            playerModel.addUIdAndHId(userId, hId);
                         }else{
+                            // 登录成功
                             playerModel.addUIdAndHId(userId, hId);
                             list.add(new CmdMessageResult(hId, msg.getMessage()));
                         }

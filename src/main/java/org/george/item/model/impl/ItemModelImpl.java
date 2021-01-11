@@ -4,8 +4,6 @@ import org.george.bag.model.BagModel;
 import org.george.bag.model.pojo.PlayerItemResult;
 import org.george.item.cache.ItemCache;
 import org.george.item.cache.bean.ItemCacheBean;
-import org.george.item.dao.ItemDao;
-import org.george.item.dao.bean.ItemBean;
 import org.george.item.model.ItemModel;
 import org.george.item.model.pojo.ItemResult;
 import org.george.item.uitl.JedisPool;

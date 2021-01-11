@@ -17,7 +17,7 @@ public class PlayerInfoDaoImpl implements PlayerInfoDao {
     }
 
     @Override
-    public void updatePlayerSelective(PlayerInfoBean bean) {
+    public void updateSelective(PlayerInfoBean bean) {
         Record record = Db.findFirst("select * from player where player_id = ?", bean.getPlayerId());
         if(bean.getPlayerName() != null){
             record.set("player_name", bean.getPlayerName());

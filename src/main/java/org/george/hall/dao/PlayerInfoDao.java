@@ -11,7 +11,7 @@ public interface PlayerInfoDao {
         return PlayerInfoDaoImpl.getInstance();
     }
 
-    void updatePlayerSelective(PlayerInfoBean bean);
+    void updateSelective(PlayerInfoBean bean);
 
     void addPlayer(PlayerInfoBean bean);
 

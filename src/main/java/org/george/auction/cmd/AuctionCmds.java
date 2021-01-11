@@ -1,6 +1,7 @@
 package org.george.auction.cmd;
 
 import org.george.auction.DeductionHandler;
+
 import org.george.auction.DeliveryHandler;
 import org.george.auction.cache.AuctionCache;
 import org.george.auction.cache.bean.AuctionCacheBean;
@@ -17,6 +18,8 @@ import org.george.cmd.pojo.Message;
 import org.george.cmd.pojo.Messages;
 import org.george.item.model.pojo.ItemResult;
 import org.george.hall.model.PlayerModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;
@@ -35,6 +38,8 @@ public class AuctionCmds {
     private AuctionConfig auctionConfig = AuctionConfig.getInstance();
 
     private AtomicBoolean flag = new AtomicBoolean(false);
+
+    private Logger logger = LoggerFactory.getLogger(AuctionCmds.class);
 
     /**
      * 购买拍卖会物品
@@ -90,6 +95,8 @@ public class AuctionCmds {
                         auctionCache.updateSelective(cacheBean);
 
                         list.add(new Message(userId, "购买成功"));
+
+                        logger.info("用户:{} 购买:{}成功，数量:{}", userId, auctionId, buyNum);
                     }
                 }finally {
                     // 解锁

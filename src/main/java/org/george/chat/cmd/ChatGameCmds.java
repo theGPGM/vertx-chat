@@ -10,6 +10,8 @@ import org.george.cmd.pojo.Message;
 import org.george.cmd.pojo.Messages;
 import org.george.chat.cache.GameCache;
 import org.george.hall.model.pojo.PlayerResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;
@@ -59,6 +61,8 @@ public class ChatGameCmds {
 
     private static final Integer get_result_waiting_second = 30;
 
+    private Logger logger = LoggerFactory.getLogger(ChatGameCmds.class);
+
     public Messages createGame(String...args){
 
 
@@ -69,19 +73,22 @@ public class ChatGameCmds {
         try{
             if(args.length != 2) {
                 list.add(new Message(userId, input_format_error));
+            } else if(!inRoom(userId, args[1])){
+                list.add(new Message(userId, not_in_the_room));
             } else if(!roomCache.existsRoom(args[1])){
-                Message msg = new Message(userId, room_not_exists);
-                list.add(msg);
+                list.add(new Message(userId, room_not_exists));
             } else if(gameCache.gameExists(args[1])){
-                Message msg = new Message(userId, game_in_the_room);
-                list.add(msg);
-            } else if(roomCache.getUserRoomIds(args[1]).size() < 2){
+                list.add(new Message(userId, game_in_the_room));
+            } else if(roomCache.getAllUserId(args[1]).size() < 2){
                 list.add(new Message(userId, room_member_not_enough));
             } else{
                 String roomId = args[1];
                 // 设置等待期，等待玩家输入结果
-                // 在这段时间内，不能在该房间内发起游戏
+                // 在等待期不能获取游戏结果
                 gameCache.addWaitingTime(roomId, get_result_waiting_second);
+
+                // 设置游戏过期时间，超过时间无法进行游戏
+                // 在这段时间内，不能在该房间内发起游戏
                 gameCache.createGame(roomId, userId, expired_second);
 
                 List<String> users = roomCache.getAllUserId(roomId);
@@ -99,6 +106,8 @@ public class ChatGameCmds {
                     sb.append("===================================================");
                     list.add(new Message(uId, sb.toString()));
                 }
+
+                logger.info("用户:{} 在房间:[{}]发起一场猜拳游戏", userId, roomId);
             }
         }finally {
             JedisPool.returnJedis(jedis);
@@ -115,7 +124,12 @@ public class ChatGameCmds {
         try{
             if(args.length != 3){
                 list.add(new Message(userId, input_format_error));
-                return new Messages(list);
+            }else if(!roomCache.existsRoom(args[1])){
+                // 房间不存在
+                list.add(new Message(userId, room_not_exists));
+            } else if(!inRoom(userId, args[1])){
+                // 不在房间中
+                list.add(new Message(userId, not_in_the_room));
             } else if(!NumUtils.checkDigit(args[2])){
                 // 输入格式错误
                 list.add(new Message(userId, input_format_error));
@@ -128,15 +142,11 @@ public class ChatGameCmds {
             } else if(gameCache.getUserAction(args[1], userId) != null){
                 // 禁止两次输入
                 list.add(new Message(userId, forbidden_second_input));
-            } else if(!inRoom(userId, args[1])){
-                // 不在房间中
-                list.add(new Message(userId, not_in_the_room));
-            } else{
+            }  else{
 
                 String roomId = args[1];
                 Integer action = Integer.parseInt(args[2]);
 
-                // 确认玩家在该房间中，如果不在，不能参加游戏
                 switch (action){
                     case 0 :{
                         list.add(new Message(userId, choose_rock));
@@ -153,6 +163,8 @@ public class ChatGameCmds {
                 }
                 gameCache.addGameUser(roomId, userId);
                 gameCache.addUserAction(roomId, userId, "" + action, expired_second);
+
+                logger.info("用户:{}参加房间:[{}]中的猜拳游戏", userId, roomId);
             }
         }finally {
             JedisPool.returnJedis(jedis);
@@ -168,8 +180,11 @@ public class ChatGameCmds {
         try{
             if(args.length != 2){
                 list.add(new Message(userId, input_format_error));
-                return new Messages(list);
+            } else if(!roomCache.existsRoom(args[1])){
+                // 房间不存在
+                list.add(new Message(userId, room_not_exists));
             } else if(!gameCache.gameExists(args[1])){
+                // 未发起游戏
                 list.add(new Message(userId, room_not_in_game));
             } else if(!inRoom(userId, args[1])){
                 // 不在房间中
@@ -183,11 +198,14 @@ public class ChatGameCmds {
             } else if(gameCache.getAllUserAction(args[1]).size() < 2){
                 // 参与人数过少
                 list.add(new Message(userId, room_member_not_enough));
+                gameCache.clearCache(args[1]);
             } else{
                 String roomId = args[1];
                 for(Message msg : settle(roomId)){
                     list.add(msg);
                 }
+                gameCache.clearCache(args[1]);
+                logger.info("获取在房间:[{}]中的游戏结果", roomId);
             }
         }finally {
             JedisPool.returnJedis(jedis);

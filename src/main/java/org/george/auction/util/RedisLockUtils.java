@@ -56,7 +56,6 @@ public class RedisLockUtils {
                 Jedis jedis = JedisPool.getJedis();
                 ThreadLocalJedisUtils.addJedis(jedis);
                 String requestId = UUID.randomUUID().toString();
-                int count = 0;
                 boolean locked = false;
                 while(true){
                     // 加锁，10 秒过期
@@ -65,21 +64,19 @@ public class RedisLockUtils {
                         break;
                     }
                 }
+                
+                try{
 
-                if(locked){
-                    try{
+                    AuctionBean bean = auctionDao.getAuction(1);
 
-                        AuctionBean bean = auctionDao.getAuction(1);
-
-                        if(bean.getNum() > 0){
-                            bean.setAuctionId(1);
-                            bean.setNum(bean.getNum() - 1);
-                            auctionDao.updateSelective(bean);
-                        }
-                    }finally {
-                        // 解锁
-                        RedisLockUtils.releaseLock("buy_auction", requestId);
+                    if(bean.getNum() > 0){
+                        bean.setAuctionId(1);
+                        bean.setNum(bean.getNum() - 1);
+                        auctionDao.updateSelective(bean);
                     }
+                }finally {
+                    // 解锁
+                    RedisLockUtils.releaseLock("buy_auction", requestId);
                 }
                 JedisPool.returnJedis(jedis);
             }).start();

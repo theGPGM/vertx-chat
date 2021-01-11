@@ -65,32 +65,45 @@ public class PlayerInfoInfoCacheImpl implements PlayerInfoCache {
             }
         }
 
-
         String json = jedis.get("playerInfo#" + playerId);
         try {
             cacheBean = objectMapper.readValue(json, PlayerInfoCacheBean.class);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         // 更新 hp
         if(jedis.exists("player_timestamp#" + playerId)){
 
             long cur = System.currentTimeMillis();
             int inc = (int) (cur - getTimeStamp(playerId)) / (1000 * 60 * 10);
+            // 未满一点不更新
             if(inc > 0){
+
                 if(cacheBean.getHp() + inc > 100){
                     cacheBean.setHp(100);
                 }else{
                     cacheBean.setHp(cacheBean.getHp() + inc);
                 }
+
+                // 更新数据库
+                PlayerInfoBean bean = new PlayerInfoBean();
+                bean.setPlayerId(cacheBean.getPlayerId());
+                bean.setHp(cacheBean.getHp());
+                playerInfoDao.updateSelective(bean);
+
+                // 更新缓存
                 try {
                     String newJson = objectMapper.writeValueAsString(cacheBean);
                     jedis.set("playerInfo#" + playerId, newJson);
-                    jedis.set("player_timestamp#" + playerId, String.valueOf(System.currentTimeMillis()));
+
                 } catch (JsonProcessingException e) {
                     e.printStackTrace();
                 }
             }
+
+            // 更新时间戳
+            jedis.set("player_timestamp#" + playerId, String.valueOf(System.currentTimeMillis()));
         }
         return cacheBean;
     }
@@ -105,12 +118,11 @@ public class PlayerInfoInfoCacheImpl implements PlayerInfoCache {
         bean.setPlayerName(bean.getPlayerName());
         bean.setHp(cacheBean.getHp());
         bean.setGold(cacheBean.getGold());
-        playerInfoDao.updatePlayerSelective(bean);
+        playerInfoDao.updateSelective(bean);
 
         String json = jedis.get("playerInfo#" + cacheBean.getPlayerId());
         try {
             PlayerInfoCacheBean old = objectMapper.readValue(json, PlayerInfoCacheBean.class);
-            PlayerInfoCacheBean newCacheBean = new PlayerInfoCacheBean();
             if(cacheBean.getPlayerName() == null){
                 cacheBean.setPlayerName(old.getPlayerName());
             }

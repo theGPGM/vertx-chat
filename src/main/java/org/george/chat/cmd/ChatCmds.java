@@ -77,6 +77,8 @@ public class ChatCmds {
             } else if(isRoomExists(args[1])){
                 list.add(new Message(userId, chat_room_exists));
             } else{
+
+                // 加入房间
                 roomCache.join(args[1], userId);
 
                 list.add(new Message(userId, create_chat_room_success));
