@@ -82,7 +82,7 @@ public class LoginCmds {
             if(args == null || args.length != 2){
                 list.add(new Message(null, input_format_error));
             }else if(playerAuthCache.loadPlayerAuthCacheBeanByName(args[0]) == null){
-                // 用户名或密码错误
+                // 用户名错误
                 list.add(new Message(null, username_or_password_wrong));
             }else if(!args[1].equals(playerAuthCache.loadPlayerAuthCacheBeanByName(args[0]).getPassword())){
                 // 密码错误
