@@ -1,5 +1,6 @@
 package org.george.mahjong.uitl;
 
+import java.awt.image.ImageProducer;
 import java.util.*;
 
 /**
@@ -7,11 +8,32 @@ import java.util.*;
  * 9 - 17 饼
  * 18 - 26 条
  * 27 - 33 东西南北中发白
+ *
+ * 有些番种需要额外的信息，这时候需要传入一个参数 param，这是一个 map，记载了以下信息：
+ * isLastCard
+ * isZiMo
+ * isGangMoPai
+ * isQiangGanghu
+ * isHuJueZhang
+ * menFeng
+ * quanFeng
+ * huCard
+ * flowerCount
  */
 
 public class MahJongUtils {
 
     public static boolean commonHu(int[] handCards){
+
+        int count = 0;
+        for(int k : handCards){
+            count += k;
+        }
+
+        if(count % 3 != 2){
+            return false;
+        }
+
         for(int i = 0; i < 34; i++){
             // 有将牌
             if(handCards[i] >= 2){
@@ -20,8 +42,6 @@ public class MahJongUtils {
                     return true;
                 }
                 handCards[i] += 2;
-            }else if(hu(handCards)){
-                return true;
             }
         }
         return false;
@@ -44,14 +64,14 @@ public class MahJongUtils {
             return true;
         }
 
-        // 去掉杠能不能胡
+        // 4 张只能作为暗刻 + 顺子
         for(int i = 0; i < 34; i++){
             if(pai[i] == 4){
-                pai[i] -= 4;
+                pai[i] -= 3;
                 if(hu(pai)){
                     return true;
                 }
-                pai[i] += 4;
+                pai[i] += 3;
             }
         }
 
@@ -84,13 +104,6 @@ public class MahJongUtils {
         }
         return false;
     }
-
-
-    /**
-     * 有些牌型需要从副露或者额外的消息
-     * 这时候需要传入一个参数 param，这是一个 map
-     * 记录了吃、碰、明杠、暗杠、是否自摸、什么圈、什么门、胡牌是否为绝章
-     */
 
     //================================== 88 番 ================================================
 
@@ -402,7 +415,7 @@ public class MahJongUtils {
 
         // 暗刻
         for(int k : n){
-            if(h[k] == 3){
+            if(h[k] >= 3){
                 kCount++;
             }else if(h[k] == 2){
                 jCount++;
@@ -434,7 +447,7 @@ public class MahJongUtils {
 
         // 暗刻
         for(int k : n){
-            if(h[k] == 3){
+            if(h[k] >= 3){
                 kCount++;
             }else if(h[k] == 2){
                 jCount++;
@@ -688,7 +701,7 @@ public class MahJongUtils {
 
         // 暗刻
         for(int k : n){
-            if(h[k] == 3){
+            if(h[k] >= 3){
                 kCount++;
             }else if(h[k] == 2 ){
                 jCount ++;
@@ -869,7 +882,7 @@ public class MahJongUtils {
             if(i % 9 == 1 || i % 9 == 3 || i % 9 == 5 || i % 9 == 7){
                 if(h[i] == 2){
                     jCount++;
-                }else if(h[i] == 3){
+                }else if(h[i] >= 3){
                     kCount++;
                 }
             }
@@ -1344,7 +1357,7 @@ public class MahJongUtils {
     public static boolean isSanAnKe(int[]h){
         int count = 0;
         for(int k : h){
-            if(k == 3){
+            if(k >= 3){
                 count ++;
             }
         }
@@ -1550,7 +1563,6 @@ public class MahJongUtils {
     //================================== 8 番  ================================================
 
     /**
-     * TODO
      * 花龙
      * @param h
      * @param param
@@ -1566,11 +1578,876 @@ public class MahJongUtils {
             }
         }
 
+        for(int i = 0; i < 9; i++){
+            if(h[i] == 0 && h[i + 9] == 0 && h[i + 18] == 0){
+                return false;
+            }
+        }
+
+        int a = -1;
+        int b = -1;
+        int c = -1;
+
+        // 先找出 1、2、3 在哪里
+        for(int i = 0; i < 3; i++){
+            if(h[0 + i * 9] != 0 && h[1 + i * 9] != 0 && h[2 + i * 9] != 0){
+                a = i;
+                break;
+            }
+        }
+
+        // 再找出 4、5、6 在哪里
+        for(int i = 0; i < 3; i++){
+            if(h[3 + i * 9] != 0 && h[4 + i * 9] != 0 && h[5 + i * 9] != 0){
+                b = i;
+                break;
+            }
+        }
+
+        // 再找出 7、8、9 在哪里
+        for(int i = 0; i < 3; i++){
+            if(h[6 + i * 9] != 0 && h[7 + i * 9] != 0 && h[8 + i * 9] != 0){
+                c = i;
+                break;
+            }
+        }
+
+        // 没找到模式
+        if (a == -1 || b == -1 || c == -1) {
+            return false;
+        }else{
+            return a != b && b != c;
+        }
+    }
+
+    /**
+     * 推不倒
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isTuiBuDao(int[] h, Map<String, Object> param){
+        // 取出碰
+        List<Integer> peng = (List<Integer>) param.get("peng");
+        // 取出明杠
+        List<Integer> mingGang = (List<Integer>) param.get("mingGang");
+        // 取出暗杠
+        List<Integer> anGang = (List<Integer>) param.get("anGang");
+        // 取出吃
+        List<List<Integer>> chi = (List<List<Integer>>) param.get("chi");
+
+        for(int k : peng){
+            h[k] += 3;
+        }
+
+        for(int k : mingGang){
+            h[k] += 4;
+        }
+
+        for(int k : anGang){
+            h[k] += 4;
+        }
+
+        for(List<Integer> list : chi){
+            for(int k : list){
+                h[k]++;
+            }
+        }
+
+        // 推不倒的所有情况
+        int[] n = new int[]{9, 10, 11, 12, 13, 16, 17, 19, 21, 22, 23, 25, 26, 33};
+        for(int k : n){
+            h[k] = 0;
+        }
+
+        for(int k : h){
+            if(k != 0) return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 三色三同顺
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isSanSeSanTongShun(int[] h, Map<String, Object> param){
+
+        // 取出吃
+        List<List<Integer>> chi = (List<List<Integer>>) param.get("chi");
+
+        for(List<Integer> list : chi){
+            for(int k : list){
+                h[k]++;
+            }
+        }
+
+        int[] n = new int[9];
+        for(int i = 0; i < 9; i++){
+            if(h[i] != 0 && h[i + 9] != 0 && h[i + 18] != 0){
+                n[i] = 1;
+            }
+        }
+
+        for(int i = 0; i < 7; i++){
+            if(n[i] != 0 && n[i + 1] != 0 && n[i + 2] != 0 ) return true;
+        }
+
         return false;
     }
 
+    /**
+     * 三色三节高
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isSanSeSanJieGao(int[] h, Map<String, Object> param){
+        // 取出碰
+        List<Integer> peng = (List<Integer>) param.get("peng");
+
+        int[] n = new int[9];
+
+        for(int k : peng){
+            n[k % 9]++;
+        }
+
+        // 找出暗刻
+        for(int i = 0; i < 27; i++){
+            if(h[i] >= 3){
+                n[i % 9]++;
+            }
+        }
+
+        boolean flag = false;
+        for(int i = 0; i < 7; i++){
+            if(n[i] != 0 && n[i + 1] != 0 && n[i + 2] != 0 ){
+                flag = true;
+            }
+        }
+
+        if(!flag){
+            return false;
+        }
+
+        for(int k : peng){
+            h[k] = 3;
+        }
+
+        for(int i = 1; i < 8; i++){
+            for(int j = 0; j < 3; j++){
+                // 找到中间的刻
+                if(h[i + j * 9] == 3){
+                    // 找两边
+                    if(h[(i - 1) + ((j + 1) % 3) * 9] == 3 && h[(i + 1) + ((j + 2) % 3) * 9] == 3){
+                        return true;
+                    }else if(h[(i - 1) + ((j + 2) % 3) * 9] == 3 && h[(i + 1) + ((j + 1) % 3) * 9] == 3){
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * TODO
+     * 无番和
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isWuFanHe(int[] h, Map<String, Object> param){
+
+        return false;
+    }
+
+    /**
+     * 妙手回春
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isMiaoShouHuiChun(int[] h, Map<String, Object> param){
+        boolean isLastCard = (boolean) param.get("isLastCard");
+        return isLastCard;
+    }
+
+    /**
+     * 海底捞月
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isHaiDiLaoYue(int[] h, Map<String, Object> param){
+        boolean isLastCard = (boolean) param.get("isLastCard");
+        boolean isZiMo = (boolean) param.get("isZiMo");
+        return isZiMo && isLastCard;
+    }
+
+    /**
+     * 杠上开花
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isGangShangKaiHua(int[] h, Map<String, Object> param){
+        boolean isGangMoPai = (boolean) param.get("isGangMoPai");
+        return isGangMoPai;
+    }
+
+    /**
+     * 抢杠和
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isQiangGanghu(int[] h, Map<String, Object> param){
+        boolean isQiangGangHu = (boolean) param.get("isQiangGangHu");
+        return isQiangGangHu;
+    }
+
+    /**
+     * 双暗杠
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isShuangAnGang(int[] h, Map<String, Object> param){
+
+        List<Integer> anGang = ((List<Integer>) param.get("anGang"));
+        return anGang.size() == 2;
+    }
+
+    //================================== 6 番  ================================================
+
+    /**
+     * 碰碰和
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isPengPengHu(int[] h, Map<String, Object> param){
+
+        // 取出碰
+        List<Integer> peng = (List<Integer>) param.get("peng");
+        // 取出明杠
+        List<Integer> mingGang = (List<Integer>) param.get("mingGang");
+        // 取出暗杠
+        List<Integer> anGang = (List<Integer>) param.get("anGang");
+
+        int count = 0;
+        count += peng.size();
+        count += mingGang.size();
+        count += anGang.size();
+
+        // 找暗刻
+        for(int k : h){
+            if(k >= 3){
+                count++;
+            }
+        }
+
+        return count == 4;
+    }
+
+    /**
+     * 混一色
+     * 如果存在都是一种花色的，在检验清一色时就会被检验出来，这里只需要判断是否存在一种花色是 12 张即可
+     * @param param
+     * @return
+     */
+    public static boolean isHunYiSe(int[] h, Map<String, Object> param){
+
+        // 取出碰
+        List<Integer> peng = (List<Integer>) param.get("peng");
+        // 取出明杠
+        List<Integer> mingGang = (List<Integer>) param.get("mingGang");
+        // 取出暗杠
+        List<Integer> anGang = (List<Integer>) param.get("anGang");
+        // 取出吃
+        List<List<Integer>> chi = ((List<List<Integer>>) param.get("chi"));
+
+        for(int k : peng){
+            h[k] += 3;
+        }
+
+        for(int k : mingGang){
+            h[k] += 4;
+        }
+
+        for(int k : anGang){
+            h[k] += 4;
+        }
+
+        for(List<Integer> list : chi){
+            h[list.get(0)]++;
+            h[list.get(1)]++;
+            h[list.get(2)]++;
+        }
+
+        // 存放万、饼、条的个数
+        int mCount = 0;
+        int bCount = 0;
+        int sCount = 0;
+
+        for(int i = 0; i <= 26; i++) {
+            if (h[i] > 0) {
+                if (i < 9) {
+                    mCount += h[i];
+                } else if (i < 18) {
+                    bCount += h[i];
+                } else {
+                    sCount += h[i];
+                }
+            }
+        }
+
+        if(mCount == 12 || bCount == 12 || sCount == 12){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 三色三步高
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isSanSeSanBuGao(int[] h, Map<String, Object> param){
+
+        // 取出吃
+        List<List<Integer>> chi = ((List<List<Integer>>) param.get("chi"));
+
+        for(List<Integer> list : chi){
+            h[list.get(0)]++;
+            h[list.get(1)]++;
+            h[list.get(2)]++;
+        }
+
+        // 记录顺子出现的左边的牌的位置
+        int[][] n = new int[3][9];
+
+        for(int i = 0; i < 7; i ++ ){
+            if(h[i] != 0 && h[i + 1] != 0 && h[i + 2] != 0){
+                h[i]--;
+                h[i + 1]--;
+                h[i + 2]--;
+                n[0][i] = 1;
+            }
+        }
+
+        for(int i = 9; i < 16; i ++ ){
+            if(h[i] != 0 && h[i + 1] != 0 && h[i + 2] != 0){
+                h[i]--;
+                h[i + 1]--;
+                h[i + 2]--;
+                n[1][i % 9] = 1;
+            }
+        }
+
+        for(int i = 18; i < 25; i ++ ){
+            if(h[i] != 0 && h[i + 1] != 0 && h[i + 2] != 0){
+                h[i]--;
+                h[i + 1]--;
+                h[i + 2]--;
+                n[2][i % 9] = 1;
+            }
+        }
+
+        // 找中间的值
+        for(int i = 2; i < 8; i++){
+            for(int j = 0; j < 3; j++){
+                if(n[j][i] != 0){
+                    if(n[(j + 1) % 3][i - 1] != 0 && n[(j + 2) % 3][i + 1] != 0){
+                        return true;
+                    }
+                    if(n[(j + 2) % 3][i - 1] != 0 && n[(j + 1) % 3][i + 1] != 0){
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 五门齐
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isWuMengQi(int[] h, Map<String, Object> param){
+
+        // 取出碰
+        List<Integer> peng = (List<Integer>) param.get("peng");
+        // 取出明杠
+        List<Integer> mingGang = (List<Integer>) param.get("mingGang");
+        // 取出暗杠
+        List<Integer> anGang = (List<Integer>) param.get("anGang");
+        // 取出吃
+        List<List<Integer>> chi = ((List<List<Integer>>) param.get("chi"));
+
+        for(int k : peng){
+            h[k] += 3;
+        }
+
+        for(int k : mingGang){
+            h[k] += 4;
+        }
+
+        for(int k : anGang){
+            h[k] += 4;
+        }
+
+        for(List<Integer> list : chi){
+            h[list.get(0)]++;
+            h[list.get(1)]++;
+            h[list.get(2)]++;
+        }
+
+        int count = 0;
+        for(int i = 0; i < 9; i++){
+            if(h[i] != 0){
+                count++;
+                break;
+            }
+        }
+        for(int i = 9; i < 18; i++){
+            if(h[i] != 0){
+                count++;
+                break;
+            }
+        }
+        for(int i = 18; i < 27; i++){
+            if(h[i] != 0){
+                count++;
+                break;
+            }
+        }
+        for(int i = 27; i < 31; i++){
+            if(h[i] != 0){
+                count++;
+                break;
+            }
+        }
+        for(int i = 31; i < 34; i++){
+            if(h[i] != 0){
+                count++;
+                break;
+            }
+        }
+
+        return count == 5;
+    }
+
+    /**
+     * 全求人
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isQuanQiuRen(int[] h, Map<String, Object> param){
+
+        // 取出碰
+        List<Integer> peng = (List<Integer>) param.get("peng");
+        // 取出明杠
+        List<Integer> mingGang = (List<Integer>) param.get("mingGang");
+        // 取出暗杠
+        List<Integer> anGang = (List<Integer>) param.get("anGang");
+        // 取出吃
+        List<List<Integer>> chi = ((List<List<Integer>>) param.get("chi"));
+
+        int count = 0;
+        count += peng.size();
+        count += mingGang.size();
+        count += chi.size();
+
+        return count == 4;
+    }
+
+    /**
+     * 双箭刻
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isShuangJianKe(int[] h, Map<String, Object> param){
+
+        // 取出碰
+        List<Integer> peng = (List<Integer>) param.get("peng");
+        // 取出明杠
+        List<Integer> mingGang = (List<Integer>) param.get("mingGang");
+        // 取出暗杠
+        List<Integer> anGang = (List<Integer>) param.get("anGang");
+
+        int[] n = new int[]{31, 32, 33};
+        int count = 0;
+        for(int k : n){
+            for(int j : peng){
+                if(k == j){
+                    count ++;
+                }
+            }
+        }
+
+        for(int k : n){
+            if(h[k] >= 3){
+                count++;
+            }
+        }
+
+        return count == 2;
+    }
+
+    /**
+     * 一明杠一暗杠
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isYiMingGangYiAnGang(int[] h, Map<String, Object> param){
+
+        // 取出明杠
+        List<Integer> mingGang = (List<Integer>) param.get("mingGang");
+        // 取出暗杠
+        List<Integer> anGang = (List<Integer>) param.get("anGang");
+
+        return mingGang.size() == 1 && anGang.size() == 1;
+    }
+
     //================================== 4 番  ================================================
+
+    /**
+     * 全带幺
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isQuanDaiYao(int[] h, Map<String, Object> param){
+
+        // 取出碰
+        List<Integer> peng = (List<Integer>) param.get("peng");
+        // 取出明杠
+        List<Integer> mingGang = (List<Integer>) param.get("mingGang");
+        // 取出暗杠
+        List<Integer> anGang = (List<Integer>) param.get("anGang");
+        // 取出吃
+        List<List<Integer>> chi = ((List<List<Integer>>) param.get("chi"));
+
+        for(int k : peng){
+            h[k] += 3;
+        }
+
+        for(int k : mingGang){
+            h[k] += 4;
+        }
+
+        for(int k : anGang){
+            h[k] += 4;
+        }
+
+        for(List<Integer> list : chi){
+            h[list.get(0)]++;
+            h[list.get(1)]++;
+            h[list.get(2)]++;
+        }
+
+        // 做一下处理
+        for(int i = 0; i < 3; i++){
+            if(h[0 + (i * 9)] != 0){
+                h[0 + (i * 9)] = 0;
+                h[1 + (i * 9)] = 0;
+                h[2 + (i * 9)] = 0;
+            }
+            if(h[8 + (i * 0)] != 0){
+                h[6 + (i * 9)] = 0;
+                h[7 + (i * 9)] = 0;
+                h[8 + (i * 9)] = 0;
+            }
+        }
+
+        int[] n = new int[]{27, 28, 29, 30, 31, 32, 33};
+
+        for(int k : n){
+            h[k] = 0;
+        }
+
+        for(int k : h){
+            if(k != 0){
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * 不求人
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isBuQiuRen(int[] h, Map<String, Object> param){
+
+        // 取出碰
+        List<Integer> peng = (List<Integer>) param.get("peng");
+        // 取出明杠
+        List<Integer> mingGang = (List<Integer>) param.get("mingGang");
+        // 取出吃
+        List<List<Integer>> chi = ((List<List<Integer>>) param.get("chi"));
+
+        return peng.size() == 0 && mingGang.size() == 0 && chi.size() == 0;
+    }
+
+    /**
+     * 双明杠
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isShuangMingGang(int[] h, Map<String, Object> param){
+
+        // 取出明杠
+        List<Integer> mingGang = (List<Integer>) param.get("mingGang");
+
+        return mingGang.size() == 2;
+    }
+
+    /**
+     * 胡绝章
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isHuJueZhang(int[] h, Map<String, Object> param){
+        return (boolean)param.get("isHuJueZhang");
+    }
+
     //================================== 2 番  ================================================
+
+    /**
+     * 箭刻
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isJianKe(int[] h, Map<String, Object> param){
+
+        int[] n = new int[]{31, 32, 33};
+        // 取出碰
+        List<Integer> peng = (List<Integer>) param.get("peng");
+
+        for(int k : peng){
+            for(int j : n){
+                if(k == j) return true;
+            }
+        }
+
+        for(int k : n){
+            if(h[k] >= 3){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 圈风刻
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isQuanFengKe(int[] h, Map<String, Object> param){
+
+        int quanFeng = (Integer) param.get("quanFeng");
+        for(int i = 27; i < 31; i++){
+            if(h[i] == 3){
+                return true;
+            }
+        }
+
+        // 取出碰
+        List<Integer> peng = (List<Integer>) param.get("peng");
+
+        for(int k : peng){
+            for(int i = 27; i < 31; i++){
+                if(i == k){
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 门风刻
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isMenFengKe(int[] h, Map<String, Object> param){
+
+        int menFeng = (Integer) param.get("menFeng");
+        for(int i = 27; i < 31; i++){
+            if(h[i] == 3){
+                return true;
+            }
+        }
+
+        // 取出碰
+        List<Integer> peng = (List<Integer>) param.get("peng");
+
+        for(int k : peng){
+            for(int i = 27; i < 31; i++){
+                if(i == k){
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 门前清
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isMenQianQing(int[] h, Map<String, Object> param){
+
+        // 取出碰
+        List<Integer> peng = (List<Integer>) param.get("peng");
+        // 取出明杠
+        List<Integer> mingGang = (List<Integer>) param.get("mingGang");
+        // 取出吃
+        List<List<Integer>> chi = ((List<List<Integer>>) param.get("chi"));
+        // 是否自摸
+        boolean isZiMo = (boolean)  param.get("isZiMo");
+
+        return isZiMo && peng.size() == 0 && mingGang.size() == 0 && chi.size() == 0;
+    }
+
+    /**
+     * 平胡
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isPingHu(int[] h, Map<String, Object> param){
+
+        // 取出碰
+        List<Integer> peng = (List<Integer>) param.get("peng");
+        // 取出明杠
+        List<Integer> mingGang = (List<Integer>) param.get("mingGang");
+        // 取出暗杠
+        List<Integer> anGang = (List<Integer>) param.get("mingGang");
+
+        if(peng.size() > 0 || mingGang.size() > 0 || anGang.size() > 0){
+            return false;
+        }
+
+        for(int i = 27; i < 33; i++){
+            if(h[i] != 0){
+                return false;
+            }
+        }
+
+        // 取出吃
+        List<List<Integer>> chi = ((List<List<Integer>>) param.get("chi"));
+
+        for(List<Integer> list : chi){
+            h[list.get(0)]++;
+            h[list.get(1)]++;
+            h[list.get(2)]++;
+        }
+
+        for(int i = 0; i < 27; i++){
+            // 判断是 将牌 + 顺子还是刻
+            if(h[i] == 3){
+                h[i] = 0;
+                if(hu(h)){
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * 四归一
+     * @param h
+     * @param param
+     * @return
+     */
+    public static boolean isSiGuiYi(int[] h, Map<String, Object> param){
+
+        // 取出碰
+        List<Integer> peng = (List<Integer>) param.get("peng");
+        // 取出吃
+        List<List<Integer>> chi = ((List<List<Integer>>) param.get("chi"));
+
+        for(List<Integer> list : chi){
+            h[list.get(0)]++;
+            h[list.get(1)]++;
+            h[list.get(2)]++;
+        }
+
+        for(int k : peng){
+            h[k] += 3;
+        }
+
+        for(int k : h){
+            if(k == 4){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static boolean isShuangTongKe(int[] h, Map<String, Object> param){
+
+        int[] n = new int[9];
+        // 取出碰
+        List<Integer> peng = (List<Integer>) param.get("peng");
+
+        for(int k : peng){
+            if(k >= 0 && k <= 26){
+                n[k % 9]++;
+            }
+        }
+
+        for(int i = 0; i < 27; i++){
+            if(h[i] == 3){
+                h[i] = 0;
+                if(hu(h)){
+                    n[i % 9]++;
+                }
+                h[i] = 3;
+            }
+            if(h[i] == 4){
+                n[i % 9]++;
+            }
+        }
+
+        for(int k : n){
+            if(k == 2){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     //================================== 1 番  ================================================
 
     public static void main(String[] args) {
@@ -1579,18 +2456,18 @@ public class MahJongUtils {
         // 牌型测试
 
         // 万
-        pai[0] = 1;
-        pai[1] = 1;
-        pai[2] = 1;
-        pai[3] = 4;
-        pai[4] = 1;
-        pai[5] = 1;
-        pai[6] = 0;
-        pai[7] = 0;
-        pai[8] = 0;
+        pai[0] = 0;
+        pai[1] = 0;
+        pai[2] = 0;
+        pai[3] = 0;
+        pai[4] = 0;
+        pai[5] = 0;
+        pai[6] = 4;
+        pai[7] = 1;
+        pai[8] = 1;
 
         // 饼
-        pai[9] = 2;
+        pai[9] = 0;
         pai[10] = 0;
         pai[11] = 0;
         pai[12] = 0;
@@ -1606,7 +2483,7 @@ public class MahJongUtils {
         pai[20] = 0;
         pai[21] = 0;
         pai[22] = 0;
-        pai[23] = 0;
+        pai[23] = 3;
         pai[24] = 0;
         pai[25] = 0;
         pai[26] = 0;
@@ -1615,15 +2492,21 @@ public class MahJongUtils {
         pai[27] = 0;
         pai[28] = 0;
         pai[29] = 0;
-        pai[30] = 0;
-        pai[31] = 0;
-        pai[32] = 0;
-        pai[33] = 0;
+        pai[30] = 3;
+        pai[31] = 1;
+        pai[32] = 1;
+        pai[33] = 1;
 
         Map<String, Object> map = new HashMap<>();
-        List<List<Integer>> value = new ArrayList<>();
+        List<Integer> peng = new ArrayList<>();
+        List<Integer> mingGang = new ArrayList<>();
+        List<Integer> angGang = new ArrayList<>();
+        List<List<Integer>> chi = new ArrayList<>();
 
-        map.put("chi", value);
-        System.out.println(commonHu(pai));
+        map.put("chi", chi);
+        map.put("peng", peng);
+        map.put("mingGang", mingGang);
+        map.put("angGang", angGang);
+        System.out.println(isShuangTongKe(pai, map));
     }
 }
