@@ -26,7 +26,7 @@ import java.util.*;
 
 public class MahJongUtils {
 
-    public static boolean commonHu(int[] p){
+    private static boolean commonHu(int[] p){
         
         int[] pai = p.clone();
 
@@ -122,7 +122,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isDaSiXi(int[] pai, Map<String, Object> param){
+    private static boolean isDaSiXi(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
         
@@ -177,7 +177,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isDaSanYuan(int[] pai, Map<String, Object> param){
+    private static boolean isDaSanYuan(int[] pai, Map<String, Object> param){
         
         int[] h = pai.clone();
         
@@ -232,7 +232,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isLvYiSe(int[] pai, Map<String, Object> param){
+    private static boolean isLvYiSe(int[] pai, Map<String, Object> param){
         
         int[] h = pai.clone();
 
@@ -246,7 +246,7 @@ public class MahJongUtils {
         List<List<Integer>> chi = (List<List<Integer>>) param.get("chi");
 
         for(int k : peng){
-            pai[k] += 3;
+            h[k] += 3;
         }
 
         if(mingGang.size() > 0){
@@ -258,17 +258,17 @@ public class MahJongUtils {
         }
 
         for(List<Integer> c : chi){
-            pai[c.get(0)]++;
-            pai[c.get(1)]++;
-            pai[c.get(2)]++;
+            h[c.get(0)]++;
+            h[c.get(1)]++;
+            h[c.get(2)]++;
         }
 
         int[] n = new int[]{19 ,20 ,21 ,23 ,24 ,25, 32};
         for(int k : n){
-            pai[k] = 0;
+            h[k] = 0;
         }
 
-        for(int k : pai){
+        for(int k : h){
             if(k != 0) return false;
         }
 
@@ -280,7 +280,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isJiuLianBaoDeng(int[] pai, Map<String, Object> param){
+    private static boolean isJiuLianBaoDeng(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
         
@@ -329,7 +329,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isLianQiDui(int[] pai, Map<String, Object> param){
+    private static boolean isLianQiDui(int[] pai, Map<String, Object> param){
         
         int[] h = pai.clone();
         
@@ -363,7 +363,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean is13Yao(int[] pai){
+    private static boolean is13Yao(int[] pai){
         int[] h = pai.clone();
         // 1、9 、东、西、南、北、中、发、白
         return h[0] * h[8] * h[9] * h[17] * h[18] * h[26] * h[27] * h[28] * h[29] * h[30] * h[31] * h[32] * h[33] == 2;
@@ -374,11 +374,11 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isSiGang(int[] pai, Map<String, Object> param){
+    private static boolean isSiGang(int[] pai, Map<String, Object> param){
 
-        int mingGangCount = (Integer) param.get("mingGang");
-        int anGangCount = (Integer) param.get("anGang");
-        return mingGangCount + anGangCount == 4;
+        List<Integer> ming = (List<Integer>) param.get("mingGang");
+        List<Integer> an = (List<Integer>) param.get("anGang");
+        return ming.size() + an.size() == 4;
     }
 
     //================================== 64 番 ================================================
@@ -388,7 +388,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isQingYaoJiu(int[] pai, Map<String, Object> param){
+    private static boolean isQingYaoJiu(int[] pai, Map<String, Object> param){
         int[] h = pai.clone();
 
         // 碰
@@ -419,7 +419,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isXiaoSiXi(int[] pai, Map<String, Object> param){
+    private static boolean isXiaoSiXi(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -455,7 +455,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isXiaoSanYuan(int[] pai, Map<String, Object> param){
+    private static boolean isXiaoSanYuan(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -490,7 +490,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isZiYiSe(int[] pai, Map<String, Object> param){
+    private static boolean isZiYiSe(int[] pai, Map<String, Object> param){
         int[] h = pai.clone();
 
         // 取出碰
@@ -539,7 +539,7 @@ public class MahJongUtils {
      * @param param 参数中需要有 anGang : 表示暗杠数
      * @return
      */
-    public static boolean isSiAnKe(int[] pai, Map<String, Object> param){
+    private static boolean isSiAnKe(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -560,7 +560,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isYiSeShuangLongHui(int[] pai, Map<String, Object> param){
+    private static boolean isYiSeShuangLongHui(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -595,7 +595,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isYiSeSiTongShun(int[] pai, Map<String, Object> param){
+    private static boolean isYiSeSiTongShun(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -627,29 +627,39 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isYiSeSiJieGao(int[] pai, Map<String, Object> param){
+    private static boolean isYiSeSiJieGao(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
         List<Integer> peng = ((List<Integer>) param.get("peng"));
+        List<Integer> mingGang = ((List<Integer>) param.get("mingGang"));
+        List<Integer> anGang = ((List<Integer>) param.get("anGang"));
 
         for(int k : peng){
             h[k] += 3;
         }
 
+        for(int k : mingGang){
+            h[k] += 4;
+        }
+
+        for(int k : anGang){
+            h[k] += 4;
+        }
+
         int i;
         for(i = 0; i < 27; i++){
-            if(h[i] == 3){
+            if(h[i] >= 3){
                 break;
             }
         }
 
         // 超过了可取范围
-        if(i % 9 >= 6){
+        if(i % 9 > 6){
             return false;
         }
 
-        return h[i] == 3 && h[i + 1] == 3 && h[i + 2] == 3 && h[i + 3] == 3;
+        return h[i] >= 3 && h[i + 1] >= 3 && h[i + 2] >= 3 && h[i + 3] >= 3;
     }
 
     //================================== 32 番 ================================================
@@ -659,7 +669,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isYiSeSiBuGao(int[] pai, Map<String, Object> param){
+    private static boolean isYiSeSiBuGao(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -711,11 +721,11 @@ public class MahJongUtils {
      * 三杠
      * @return
      */
-    public static boolean isSanGang(int[] pai, Map<String, Object> param){
+    private static boolean isSanGang(int[] pai, Map<String, Object> param){
 
-        int mingGang = (Integer) param.get("mingGang");
-        int anGang = (Integer) param.get("anGang");
-        return  mingGang + anGang == 3;
+        List<Integer> ming = (List<Integer>) param.get("mingGang");
+        List<Integer> an = (List<Integer>) param.get("anGang");
+        return ming.size() + an.size() == 3;
     }
 
     /**
@@ -723,7 +733,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isHunYaoJiu(int[] pai, Map<String, Object> param){
+    private static boolean isHunYaoJiu(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -759,7 +769,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isQiDui(int[] pai){
+    private static boolean isQiDui(int[] pai){
 
         int[] h = pai.clone();
 
@@ -788,7 +798,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isQiXingBuKao(int[] pai){
+    private static boolean isQiXingBuKao(int[] pai){
 
         int[] h = pai.clone();
 
@@ -853,7 +863,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isQingYiSe(int[] pai, Map<String, Object> param){
+    private static boolean isQingYiSe(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -867,14 +877,23 @@ public class MahJongUtils {
         List<List<Integer>> chi = ((List<List<Integer>>) param.get("chi"));
 
         for(int k : peng){
+            if(k >= 27){
+                return false;
+            }
             h[k] += 3;
         }
 
         for(int k : mingGang){
+            if(k >= 27){
+                return false;
+            }
             h[k] += 4;
         }
 
         for(int k : anGang){
+            if(k >= 27){
+                return false;
+            }
             h[k] += 4;
         }
 
@@ -901,10 +920,11 @@ public class MahJongUtils {
             }
         }
 
-        if(mCount == 14 || bCount == 14 || sCount == 14){
-            return true;
-        }
-        return false;
+        int count = 0;
+        if(mCount != 0) count++;
+        if(bCount != 0) count++;
+        if(sCount != 0) count++;
+        return count == 1;
     }
 
     /**
@@ -912,7 +932,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isQuanShuangKe(int[] pai, Map<String, Object> param){
+    private static boolean isQuanShuangKe(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -946,7 +966,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isYiSeSanTongShun(int[] pai, Map<String, Object> param){
+    private static boolean isYiSeSanTongShun(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -973,7 +993,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isYiSeSanJieGao(int[] pai, Map<String, Object> param){
+    private static boolean isYiSeSanJieGao(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -998,7 +1018,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isQuanDa(int[] pai, Map<String, Object> param){
+    private static boolean isQuanDa(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -1048,7 +1068,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isQuanZhong(int[] pai, Map<String, Object> param){
+    private static boolean isQuanZhong(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -1098,7 +1118,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isQuanXiao(int[] pai, Map<String, Object> param){
+    private static boolean isQuanXiao(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -1150,7 +1170,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isQingLong(int[] pai, Map<String, Object> param){
+    private static boolean isQingLong(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -1197,7 +1217,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isSanSeSanLongHui(int[] pai, Map<String, Object> param ){
+    private static boolean isSanSeSanLongHui(int[] pai, Map<String, Object> param ){
         
         int[] h = pai.clone();
 
@@ -1283,7 +1303,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isYiSeSanBuGao(int[] pai, Map<String, Object> param){
+    private static boolean isYiSeSanBuGao(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -1336,7 +1356,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isQuanDaiWu(int[] pai, Map<String, Object> param){
+    private static boolean isQuanDaiWu(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -1398,7 +1418,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isSanTongKe(int[] pai, Map<String, Object> param){
+    private static boolean isSanTongKe(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -1435,7 +1455,7 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isSanAnKe(int[] pai){
+    private static boolean isSanAnKe(int[] pai){
 
         int[] h = pai.clone();
 
@@ -1465,69 +1485,26 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean isQuanBuKao(int[] pai){
+    private static boolean isQuanBuKao(int[] pai){
 
         int[] h = pai.clone();
 
-        // 存放万、饼、条
-        List<List<Integer>> list = new ArrayList<>();
-        list.add(new ArrayList<>());
-        list.add(new ArrayList<>());
-        list.add(new ArrayList<>());
-
-        for(int i = 0; i <= 26; i++){
-            if(h[i] > 0){
-                if(i < 9){
-                    list.get(0).add(i % 9);
-                }else if(i < 18){
-                    list.get(1).add(i % 9);
-                }else{
-                    list.get(2).add(i % 9);
-                }
-            }
-        }
-
-        // 缺门
-        for(int i = 0; i < 3; i++){
-            if(list.get(i).size() == 0){
-                return false;
-            }
-        }
-
-        // 判断万、条、饼内部是否满足隔 3 和 隔 6
-        for(int i = 0; i < 3; i++){
-            for(int j = 1; j < list.get(i).size(); j++){
-                if(list.get(i).get(j - 1) + 3 == list.get(i).get(j) || list.get(i).get(j - 1) + 6 == list.get(i).get(j)){
-                    continue;
-                }else{
+        for(int i = 0; i < 8; i++){
+            for(int j = 0; j < 3; j++){
+                if(h[i + j * 9] != 0 && h[i + 1 + j * 9] != 0){
                     return false;
                 }
             }
         }
 
-        // 万、饼、条对3取模
-        int[] c = new int[3];
-        for(int i = 0; i < 3; i++){
-            for(int j = 0; j < list.get(i).size(); j++){
-                c[list.get(i).get(j) % 3]++;
-            }
-        }
-
-        for(int i = 0; i < 3; i++){
-            if(c[i] != 3){
-                return false;
-            }
-        }
-
         int count = 0;
-        for(int i = 27; i <= 33; i++){
-            if(h[i] > 1){
-                return false;
-            }else if(h[i] == 1){
-                count++;
+        for(int k : h){
+            if(k != 0){
+                count ++;
             }
         }
-        return count == 5;
+
+        return count == 14;
     }
 
     /**
@@ -1536,7 +1513,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isDaYuWu(int[] pai, Map<String, Object> param){
+    private static boolean isDaYuWu(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -1590,7 +1567,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isXiaoYuWu(int[] pai, Map<String, Object> param){
+    private static boolean isXiaoYuWu(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -1644,7 +1621,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isSanFengKe(int[] pai, Map<String, Object> param){
+    private static boolean isSanFengKe(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -1672,7 +1649,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isHuaLong(int[] pai, Map<String, Object> param){
+    private static boolean isHuaLong(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -1733,7 +1710,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isTuiBuDao(int[] pai, Map<String, Object> param){
+    private static boolean isTuiBuDao(int[] pai, Map<String, Object> param){
         
         int[] h = pai.clone();
 
@@ -1783,12 +1760,30 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isSanSeSanTongShun(int[] pai, Map<String, Object> param){
+    private static boolean isSanSeSanTongShun(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
+        // 取出碰
+        List<Integer> peng = (List<Integer>) param.get("peng");
+        // 取出明杠
+        List<Integer> mingGang = (List<Integer>) param.get("mingGang");
+        // 取出暗杠
+        List<Integer> anGang = (List<Integer>) param.get("anGang");
         // 取出吃
         List<List<Integer>> chi = (List<List<Integer>>) param.get("chi");
+
+        for(int k : peng){
+            h[k] += 3;
+        }
+
+        for(int k : mingGang){
+            h[k] += 4;
+        }
+
+        for(int k : anGang){
+            h[k] += 4;
+        }
 
         for(List<Integer> list : chi){
             for(int k : list){
@@ -1816,7 +1811,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isSanSeSanJieGao(int[] pai, Map<String, Object> param){
+    private static boolean isSanSeSanJieGao(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -1873,7 +1868,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isWuFanHe(int[] pai, Map<String, Object> param){
+    private static boolean isWuFanHe(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -1927,7 +1922,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isMiaoShouHuiChun(int[] pai, Map<String, Object> param){
+    private static boolean isMiaoShouHuiChun(int[] pai, Map<String, Object> param){
         boolean isLastCard = (boolean) param.get("isLastCard");
         return isLastCard;
     }
@@ -1938,7 +1933,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isHaiDiLaoYue(int[] pai, Map<String, Object> param){
+    private static boolean isHaiDiLaoYue(int[] pai, Map<String, Object> param){
         boolean isLastCard = (boolean) param.get("isLastCard");
         boolean isZiMo = (boolean) param.get("isZiMo");
         return isZiMo && isLastCard;
@@ -1950,7 +1945,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isGangShangKaiHua(int[] pai, Map<String, Object> param){
+    private static boolean isGangShangKaiHua(int[] pai, Map<String, Object> param){
         boolean isGangMoPai = (boolean) param.get("isGangMoPai");
         return isGangMoPai;
     }
@@ -1961,7 +1956,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isQiangGanghu(int[] pai, Map<String, Object> param){
+    private static boolean isQiangGanghu(int[] pai, Map<String, Object> param){
         boolean isQiangGangHu = (boolean) param.get("isQiangGangHu");
         return isQiangGangHu;
     }
@@ -1972,7 +1967,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isShuangAnGang(int[] pai, Map<String, Object> param){
+    private static boolean isShuangAnGang(int[] pai, Map<String, Object> param){
 
         List<Integer> anGang = ((List<Integer>) param.get("anGang"));
         return anGang.size() == 2;
@@ -1986,7 +1981,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isPengPengHu(int[] pai, Map<String, Object> param){
+    private static boolean isPengPengHu(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2018,7 +2013,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isHunYiSe(int[] pai, Map<String, Object> param){
+    private static boolean isHunYiSe(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2066,10 +2061,12 @@ public class MahJongUtils {
             }
         }
 
-        if(mCount == 12 || bCount == 12 || sCount == 12){
-            return true;
-        }
-        return false;
+        int count = 0;
+        if(mCount != 0)count ++;
+        if(bCount != 0)count ++;
+        if(sCount != 0)count ++;
+
+        return count == 1;
     }
 
     /**
@@ -2078,7 +2075,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isSanSeSanBuGao(int[] pai, Map<String, Object> param){
+    private static boolean isSanSeSanBuGao(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2144,7 +2141,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isWuMenQi(int[] pai, Map<String, Object> param){
+    private static boolean isWuMenQi(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2216,7 +2213,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isQuanQiuRen(int[] pai, Map<String, Object> param){
+    private static boolean isQuanQiuRen(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2229,12 +2226,14 @@ public class MahJongUtils {
         // 取出吃
         List<List<Integer>> chi = ((List<List<Integer>>) param.get("chi"));
 
+        boolean isZiMo = (boolean)  param.get("isZiMo");
+
         int count = 0;
         count += peng.size();
         count += mingGang.size();
         count += chi.size();
 
-        return count == 4;
+        return count == 4 && isZiMo == false;
     }
 
     /**
@@ -2243,7 +2242,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isShuangJianKe(int[] pai, Map<String, Object> param){
+    private static boolean isShuangJianKe(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2279,7 +2278,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isYiMingGangYiAnGang(int[] pai, Map<String, Object> param){
+    private static boolean isYiMingGangYiAnGang(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
         
@@ -2288,7 +2287,7 @@ public class MahJongUtils {
         // 取出暗杠
         List<Integer> anGang = (List<Integer>) param.get("anGang");
 
-        return mingGang.size() == 1 && anGang.size() == 1;
+        return mingGang.size() >= 1 && anGang.size() >= 1;
     }
 
     //================================== 4 番  ================================================
@@ -2299,7 +2298,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isQuanDaiYao(int[] pai, Map<String, Object> param){
+    private static boolean isQuanDaiYao(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2312,22 +2311,16 @@ public class MahJongUtils {
         // 取出吃
         List<List<Integer>> chi = ((List<List<Integer>>) param.get("chi"));
 
-        for(int k : peng){
-            h[k] += 3;
-        }
-
-        for(int k : mingGang){
-            h[k] += 4;
-        }
-
-        for(int k : anGang){
-            h[k] += 4;
-        }
-
         for(List<Integer> list : chi){
-            h[list.get(0)]++;
-            h[list.get(1)]++;
-            h[list.get(2)]++;
+            boolean flag = false;
+            for(int k : list){
+                if(k % 9 == 0 || k % 9 == 8){
+                    flag = true;
+                }
+            }
+            if(!flag){
+                return false;
+            }
         }
 
         // 做一下处理
@@ -2365,7 +2358,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isBuQiuRen(int[] pai, Map<String, Object> param){
+    private static boolean isBuQiuRen(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2385,7 +2378,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isShuangMingGang(int[] pai, Map<String, Object> param){
+    private static boolean isShuangMingGang(int[] pai, Map<String, Object> param){
 
         // 取出明杠
         List<Integer> mingGang = (List<Integer>) param.get("mingGang");
@@ -2399,7 +2392,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isHuJueZhang(int[] pai, Map<String, Object> param){
+    private static boolean isHuJueZhang(int[] pai, Map<String, Object> param){
         return (boolean)param.get("isHuJueZhang");
     }
 
@@ -2411,7 +2404,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isJianKe(int[] pai, Map<String, Object> param){
+    private static boolean isJianKe(int[] pai, Map<String, Object> param){
         int[] h = pai.clone();
 
         int[] n = new int[]{31, 32, 33};
@@ -2439,7 +2432,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isQuanFengKe(int[] pai, Map<String, Object> param){
+    private static boolean isQuanFengKe(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2470,7 +2463,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isMenFengKe(int[] pai, Map<String, Object> param){
+    private static boolean isMenFengKe(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2501,7 +2494,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isMenQianQing(int[] pai, Map<String, Object> param){
+    private static boolean isMenQianQing(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2523,7 +2516,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isPingHu(int[] pai, Map<String, Object> param){
+    private static boolean isPingHu(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2572,7 +2565,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isSiGuiYi(int[] pai, Map<String, Object> param){
+    private static boolean isSiGuiYi(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2606,7 +2599,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isShuangTongKe(int[] pai, Map<String, Object> param){
+    private static boolean isShuangTongKe(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2659,7 +2652,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isShuangAnKe(int[] pai, Map<String, Object> param){
+    private static boolean isShuangAnKe(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2690,7 +2683,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isAnGang(int[] pai, Map<String, Object> param){
+    private static boolean isAnGang(int[] pai, Map<String, Object> param){
         List<Integer> anGang = (List<Integer>) param.get("anGang");
         return anGang.size() != 0;
     }
@@ -2701,7 +2694,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isDuanYao(int[] pai, Map<String, Object> param){
+    private static boolean isDuanYao(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2748,7 +2741,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isYiBanGao(int[] pai, Map<String, Object> param){
+    private static boolean isYiBanGao(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2787,7 +2780,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isXiXiangFeng(int[] pai, Map<String, Object> param){
+    private static boolean isXiXiangFeng(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2832,7 +2825,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isLianLiu(int[] pai, Map<String, Object> param){
+    private static boolean isLianLiu(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2877,7 +2870,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isLaoShaoFu(int[] pai, Map<String, Object> param){
+    private static boolean isLaoShaoFu(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2920,7 +2913,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isYaoJiuKe(int[] pai, Map<String, Object> param){
+    private static boolean isYaoJiuKe(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -2982,7 +2975,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isMingGang(int[] pai, Map<String, Object> param){
+    private static boolean isMingGang(int[] pai, Map<String, Object> param){
 
         List<Integer> list = (List<Integer>) param.get("mingGang");
         return list.size() > 0;
@@ -2994,7 +2987,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isQueYiMen(int[] pai, Map<String, Object> param){
+    private static boolean isQueYiMen(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -3040,7 +3033,11 @@ public class MahJongUtils {
             }
         }
 
-        return mCount == 0 || sCount == 0 || bCount == 0;
+        int count = 0;
+        if(mCount != 0) count++;
+        if(bCount != 0) count++;
+        if(sCount != 0) count++;
+        return count == 2;
     }
 
     /**
@@ -3049,7 +3046,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isWuZi(int[] pai, Map<String, Object> param){
+    private static boolean isWuZi(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -3095,7 +3092,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isDanDiaoJiang(int[] pai, Map<String, Object> param){
+    private static boolean isDanDiaoJiang(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -3146,7 +3143,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isBianZhang(int[] pai, Map<String, Object> param){
+    private static boolean isBianZhang(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -3208,7 +3205,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isKanZhang(int[] pai, Map<String, Object> param){
+    private static boolean isKanZhang(int[] pai, Map<String, Object> param){
 
         int[] h = pai.clone();
 
@@ -3245,7 +3242,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static boolean isZiMo(int[] h, Map<String, Object> param){
+    private static boolean isZiMo(int[] h, Map<String, Object> param){
         return (boolean) param.get("isZiMo");
     }
 
@@ -3391,10 +3388,6 @@ public class MahJongUtils {
             map.put("五门齐", 6);
         }
 
-        if(isQuanQiuRen(h, param)){
-            map.put("全求人", 6);
-        }
-
         if(!map.containsKey("大三元") && !map.containsKey("小三元") && isShuangJianKe(h, param)){
             map.put("双箭刻", 6);
         }
@@ -3407,7 +3400,9 @@ public class MahJongUtils {
             map.put("全带幺", 4);
         }
 
-        if(!map.containsKey("连七对") && !map.containsKey("十三幺") && !map.containsKey("四暗刻") && !map.containsKey("七对") && !map.containsKey("七星不靠") && !map.containsKey("全不靠") && isBuQiuRen(h, param)){
+        if(isQuanQiuRen(h, param)){
+            map.put("全求人", 6);
+        }else if(!map.containsKey("七对") && !map.containsKey("七星不靠") && !map.containsKey("全不靠") && isBuQiuRen(h, param)){
             map.put("不求人", 4);
         }
 
@@ -3452,7 +3447,7 @@ public class MahJongUtils {
             map.put("双暗刻", 2);
         }
 
-        if(!map.containsKey("双暗杠") && !map.containsKey("一明杠一暗杠") && isAnGang(h, param)){
+        if(!map.containsKey("大四喜") && !map.containsKey("大三元") && !map.containsKey("小四喜") && !map.containsKey("小三元") && !map.containsKey("三杠") && !map.containsKey("四杠") && !map.containsKey("双暗杠") && !map.containsKey("一明杠一暗杠") && isAnGang(h, param)){
             map.put("暗杠", 2);
         }
 
@@ -3464,7 +3459,7 @@ public class MahJongUtils {
             map.put("一般高", 1);
         }
 
-        if(!map.containsKey("三色三龙会") && isXiXiangFeng(h, param)){
+        if(!map.containsKey("三色三龙会") && !map.containsKey("三色三同顺") && !map.containsKey("一色四同顺") && !map.containsKey("一色三同顺") && isXiXiangFeng(h, param)){
             map.put("喜相逢", 1);
         }
 
@@ -3481,7 +3476,7 @@ public class MahJongUtils {
             map.put("幺九刻", 1);
         }
 
-        if(!map.containsKey("一明杠一暗杠") && isMingGang(h, param)){
+        if(!map.containsKey("大四喜") && !map.containsKey("大三元") && !map.containsKey("小四喜") && !map.containsKey("小三元") && !map.containsKey("一明杠一暗杠") && !map.containsKey("三杠") && !map.containsKey("四杠") && !map.containsKey("双明杠") && isMingGang(h, param)){
             map.put("明杠", 1);
         }
 
@@ -3496,9 +3491,7 @@ public class MahJongUtils {
 
         if(isBianZhang(h, param)){
             map.put("边张", 1);
-        }
-
-        if(isKanZhang(h, param)){
+        }else if(isKanZhang(h, param)){
             map.put("坎张", 1);
         }
 
@@ -3524,32 +3517,119 @@ public class MahJongUtils {
         return map;
     }
 
+    /**
+     * 判断能不能胡
+     * @param pai
+     * @return
+     */
+    public static boolean canHu(int[] pai){
+        int[] h = pai.clone();
+        // 特殊和型
+        if(is13Yao(h)){
+            return true;
+        }
+        if(isQuanBuKao(h)){
+            return true;
+        }
+        if(isQiXingBuKao(h)){
+            return true;
+        }
+        // 一般和型
+        if(commonHu(h)){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 能否左吃
+     * @return
+     */
+    public static boolean canLeftChi(int[] pai, int card){
+        if(card >= 27) return false;
+        if(card % 9 > 6) return false;
+        if(pai[card + 1] != 0 && pai[card + 2] != 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 能否中吃
+     * @param pai
+     * @param card
+     * @return
+     */
+    public static boolean canMidChi(int[] pai, int card){
+        if(card >= 27) return false;
+        if(card % 9 == 0 || card % 9 == 8) return false;
+        if(pai[card - 1] != 0 && pai[card + 1] != 0){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 能否右吃
+     * @param pai
+     * @param card
+     * @return
+     */
+    public static boolean canRightChi(int[] pai, int card){
+        if(card >= 27) return false;
+        if(card % 9 < 2) return false;
+        if(pai[card - 2] != 0 && pai[card - 1] != 0){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 能否碰
+     * @param pai
+     * @param card
+     * @return
+     */
+    public static boolean isPeng(int[] pai, int card){
+        return pai[card] == 3;
+    }
+
+    /**
+     * 能否杠
+     * @param pai
+     * @param card
+     * @return
+     */
+    public static boolean isGang(int[] pai, int card){
+        return pai[card] == 4;
+    }
+
     public static void main(String[] args) {
         int [] pai = new int[34];
 
         // 牌型测试
 
         // 万
-        pai[0] = 1;
-        pai[1] = 1;
-        pai[2] = 1;
+        pai[0] = 0;
+        pai[1] = 0;
+        pai[2] = 0;
         pai[3] = 0;
         pai[4] = 0;
         pai[5] = 0;
-        pai[6] = 1;
-        pai[7] = 1;
-        pai[8] = 1;
+        pai[6] = 0;
+        pai[7] = 0;
+        pai[8] = 0;
 
         // 饼
-        pai[9] = 1;
-        pai[10] = 2;
-        pai[11] = 2;
-        pai[12] = 1;
+        pai[9] = 0;
+        pai[10] = 0;
+        pai[11] = 0;
+        pai[12] = 0;
         pai[13] = 0;
         pai[14] = 0;
         pai[15] = 0;
         pai[16] = 0;
-        pai[17] = 2;
+        pai[17] = 0;
 
         // 条
         pai[18] = 0;
@@ -3568,22 +3648,51 @@ public class MahJongUtils {
         pai[29] = 0;
         pai[30] = 0;
         pai[31] = 0;
-        pai[32] = 0;
+        pai[32] = 2;
         pai[33] = 0;
 
         Map<String, Object> map = new HashMap<>();
         List<Integer> peng = new ArrayList<>();
         List<Integer> mingGang = new ArrayList<>();
-        List<Integer> angGang = new ArrayList<>();
+        List<Integer> anGang = new ArrayList<>();
         List<List<Integer>> chi = new ArrayList<>();
+
+        List<Integer> l1 = new ArrayList<>();
+        List<Integer> l2 = new ArrayList<>();
+        List<Integer> l3 = new ArrayList<>();
+        List<Integer> l4 = new ArrayList<>();
+
+
+        l1.add(19);
+        l1.add(20);
+        l1.add(21);
+
+        l2.add(19);
+        l2.add(20);
+        l2.add(21);
+
+//        chi.add(l1);
+//        chi.add(l2);
+
+        peng.add(29);
+        peng.add(30);
+
+        mingGang.add(27);
+        mingGang.add(28);
 
         map.put("chi", chi);
         map.put("peng", peng);
         map.put("mingGang", mingGang);
-        map.put("anGang", angGang);
+        map.put("anGang", anGang);
         map.put("menFeng", 0);
         map.put("quanFeng", 0);
-        map.put("huCard", 10);
-        System.out.println(isKanZhang(pai, map));
+        map.put("isLastCard", false);
+        map.put("isZiMo", true);
+        map.put("isGangMoPai", false);
+        map.put("isQiangGangHu", false);
+        map.put("isHuJueZhang", false);
+        map.put("huCard", 32);
+        map.put("flowerCount", 2);
+        System.out.println(calculate(pai, map));
     }
 }

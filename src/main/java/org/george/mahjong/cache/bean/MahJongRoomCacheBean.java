@@ -13,4 +13,12 @@ public class MahJongRoomCacheBean {
 
     // 轮到谁发出命令
     private int whoAct = 0;
+
+    public Integer getRoomId() {
+        return roomId;
+    }
+
+    public void setRoomId(Integer roomId) {
+        this.roomId = roomId;
+    }
 }
