@@ -31,8 +31,18 @@ public class MahJongPlayerCacheBean {
     // 花牌数
     private int flowerCard = 0;
 
+    // 准备开始游戏
+    private boolean ready = false;
+
     // 是否离线
     private boolean isOffline = false;
+
+    // 点数
+    private Integer point = 0;
+
+    public Integer getPlayerId(){
+        return playerId;
+    }
 
     public void addChi(List<Integer> c){
         chi.add(c);
@@ -66,8 +76,8 @@ public class MahJongPlayerCacheBean {
         return anGang;
     }
 
-    public void addFlowerCard(){
-        flowerCard++;
+    public void addFlowerCard(Integer count){
+        flowerCard += count;
     }
 
     public int getFlowerCard(){
@@ -82,10 +92,30 @@ public class MahJongPlayerCacheBean {
         this.isOffline = val;
     }
 
-    public void signHandCards(List<Integer> handCards){
+    public boolean isReady(){
+        return ready;
+    }
+
+    public void setReady(boolean val){
+        this.ready = val;
+    }
+
+    public void addHandCards(int[] handCards){
         for(int k : handCards){
             handCard[k] ++;
         }
+    }
+
+    public Integer getPoint() {
+        return point;
+    }
+
+    public void setPoint(Integer point) {
+        this.point = point;
+    }
+
+    public int[] getHandCards(){
+        return handCard;
     }
 
     public MahJongPlayerCacheBean(Integer playerId) {

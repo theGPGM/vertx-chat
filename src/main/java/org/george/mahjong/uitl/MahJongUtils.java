@@ -3604,6 +3604,39 @@ public class MahJongUtils {
         return pai[card] == 4;
     }
 
+    /**
+     * 洗牌
+     * @return
+     */
+    public static List<Integer> shuffle(){
+
+        Random rand = new Random();
+
+        List<Integer> list = new ArrayList<>();
+        // 每种 4 张
+        for(int i = 0; i < 34; i++){
+            for(int j = 0; j < 3; j++){
+                list.add(i);
+            }
+        }
+        // 8 张花牌
+        for(int i = 0; i < 8; i++){
+            list.add(34);
+        }
+
+        for(int i = list.size() - 1; i >= 0; i--){
+            swap(list, rand.nextInt(i + 1), i);
+        }
+
+        return list;
+    }
+
+    private static void swap(List<Integer> list, int l, int r){
+        Integer temp = list.get(l);
+        list.set(l, list.get(r));
+        list.set(r, temp);
+    }
+
     public static void main(String[] args) {
         int [] pai = new int[34];
 
@@ -3693,6 +3726,8 @@ public class MahJongUtils {
         map.put("isHuJueZhang", false);
         map.put("huCard", 32);
         map.put("flowerCount", 2);
-        System.out.println(calculate(pai, map));
+//        System.out.println(calculate(pai, map));
+
+        System.out.println(shuffle());
     }
 }

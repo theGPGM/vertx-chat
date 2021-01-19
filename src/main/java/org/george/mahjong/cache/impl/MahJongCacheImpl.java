@@ -3,12 +3,12 @@ package org.george.mahjong.cache.impl;
 import org.george.mahjong.cache.MahJongCache;
 import org.george.mahjong.cache.bean.MahJongRoomCacheBean;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MahJongCacheImpl implements MahJongCache {
 
-    private Map<Integer, MahJongRoomCacheBean> map = new HashMap<>();
+    private Map<Integer, MahJongRoomCacheBean> map = new ConcurrentHashMap<>();
 
     private MahJongCacheImpl(){}
 
