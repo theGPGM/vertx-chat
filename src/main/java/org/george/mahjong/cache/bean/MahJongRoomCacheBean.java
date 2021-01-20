@@ -30,14 +30,19 @@ public class MahJongRoomCacheBean {
      */
     private Integer zhuang;
 
-    /**
-     * 轮到谁操作
-     */
-    private Integer whoAct;
+    private Integer whoPeng = -1;
 
-    private Integer passCount = 0;
+    private Integer whoGang = -1;
+
+    private Integer whoChi = -1;
+
+    private Integer whoPlay = -1;
+
+    private List<Integer> whoHu = new ArrayList<>();
 
     private Integer playCard = -1;
+
+    private Integer whoQiangGang = -1;
 
     /**
      * 四位玩家
@@ -66,17 +71,8 @@ public class MahJongRoomCacheBean {
         return list;
     }
 
-    public MahJongPlayerCacheBean getPlayer(Integer playerId){
-        for(MahJongPlayerCacheBean player: list){
-            if(player.getPlayerId().equals(playerId)){
-                return player;
-            }
-        }
-        return null;
-    }
-
-    public void addPlayer(MahJongPlayerCacheBean cacheBean){
-        list.add(cacheBean);
+    public List<MahJongPlayerCacheBean> getList() {
+        return list;
     }
 
     public MahJongRoomCacheBean(Integer roomId) {
@@ -89,14 +85,6 @@ public class MahJongRoomCacheBean {
 
     public List<Integer> getCardWall(){
         return cardWall;
-    }
-
-    public int getWhoAct() {
-        return whoAct;
-    }
-
-    public void setWhoAct(int whoAct) {
-        this.whoAct = whoAct;
     }
 
     public Integer getQuan() {
@@ -139,12 +127,44 @@ public class MahJongRoomCacheBean {
         this.cardPool = cardPool;
     }
 
-    public Integer getPassCount() {
-        return passCount;
+    public Integer getWhoPeng() {
+        return whoPeng;
     }
 
-    public void setPassCount(Integer passCount) {
-        this.passCount = passCount;
+    public void setWhoPeng(Integer whoPeng) {
+        this.whoPeng = whoPeng;
+    }
+
+    public Integer getWhoGang() {
+        return whoGang;
+    }
+
+    public void setWhoGang(Integer whoGang) {
+        this.whoGang = whoGang;
+    }
+
+    public Integer getWhoChi() {
+        return whoChi;
+    }
+
+    public void setWhoChi(Integer whoChi) {
+        this.whoChi = whoChi;
+    }
+
+    public List<Integer> getWhoHu() {
+        return whoHu;
+    }
+
+    public void addWhoHu(Integer playerId) {
+        this.whoHu.add(playerId);
+    }
+
+    public Integer getWhoPlay() {
+        return whoPlay;
+    }
+
+    public void setWhoPlay(Integer whoPlay) {
+        this.whoPlay = whoPlay;
     }
 
     public Integer getPlayCard() {
@@ -153,5 +173,13 @@ public class MahJongRoomCacheBean {
 
     public void setPlayCard(Integer playCard) {
         this.playCard = playCard;
+    }
+
+    public Integer getWhoQiangGang() {
+        return whoQiangGang;
+    }
+
+    public void setWhoQiangGang(Integer whoQiangGang) {
+        this.whoQiangGang = whoQiangGang;
     }
 }

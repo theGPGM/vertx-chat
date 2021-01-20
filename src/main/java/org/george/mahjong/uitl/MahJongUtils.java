@@ -3123,7 +3123,10 @@ public class MahJongUtils {
             h[list.get(2)]++;
         }
 
-        int huCard = (Integer) param.get("huCard");
+        Integer huCard = (Integer) param.get("huCard");
+        if(huCard == null){
+            return false;
+        }
 
         if(h[huCard] == 2){
             h[huCard] -= 2;
@@ -3147,7 +3150,11 @@ public class MahJongUtils {
 
         int[] h = pai.clone();
 
-        int huCard = (Integer) param.get("huCard");
+        Integer huCard = (Integer) param.get("huCard");
+        if(huCard == null){
+            return false;
+        }
+
         if(huCard >= 27){
             return false;
         }
@@ -3209,7 +3216,10 @@ public class MahJongUtils {
 
         int[] h = pai.clone();
 
-        int huCard = (Integer) param.get("huCard");
+        Integer huCard = (Integer) param.get("huCard");
+        if(huCard == null){
+            return false;
+        }
         if(huCard >= 27){
             return false;
         }
@@ -3252,7 +3262,7 @@ public class MahJongUtils {
      * @param param
      * @return
      */
-    public static Map calculate(int[] h, Map<String, Object> param){
+    public static Map<String, Integer> calculate(int[] h, Map<String, Object> param){
 
         Map<String, Integer> map = new TreeMap<>();
         if(isDaSiXi(h, param)){
@@ -3522,8 +3532,12 @@ public class MahJongUtils {
      * @param pai
      * @return
      */
-    public static boolean canHu(int[] pai){
+    public static boolean canHu(int[] pai, Integer card){
+
         int[] h = pai.clone();
+        if(card != null){
+            h[card]++;
+        }
         // 特殊和型
         if(is13Yao(h)){
             return true;
@@ -3545,10 +3559,15 @@ public class MahJongUtils {
      * 能否左吃
      * @return
      */
-    public static boolean canLeftChi(int[] pai, int card){
+    public static boolean canLeftChi(int[] pai, Integer card){
+
+        if(card == null) return false;
         if(card >= 27) return false;
         if(card % 9 > 6) return false;
-        if(pai[card + 1] != 0 && pai[card + 2] != 0) {
+
+        int[] h = pai.clone();
+        h[card]++;
+        if(h[card] != 0 && h[card + 1] != 0 && h[card + 2] != 0) {
             return true;
         }
         return false;
@@ -3560,10 +3579,14 @@ public class MahJongUtils {
      * @param card
      * @return
      */
-    public static boolean canMidChi(int[] pai, int card){
+    public static boolean canMidChi(int[] pai, Integer card){
+        if(card == null) return false;
         if(card >= 27) return false;
         if(card % 9 == 0 || card % 9 == 8) return false;
-        if(pai[card - 1] != 0 && pai[card + 1] != 0){
+
+        int[] h = pai.clone();
+        h[card]++;
+        if(h[card - 1] != 0 && h[card] != 0 && h[card + 1] != 0) {
             return true;
         }
         return false;
@@ -3575,10 +3598,14 @@ public class MahJongUtils {
      * @param card
      * @return
      */
-    public static boolean canRightChi(int[] pai, int card){
+    public static boolean canRightChi(int[] pai, Integer card){
+        if(card == null) return false;
         if(card >= 27) return false;
         if(card % 9 < 2) return false;
-        if(pai[card - 2] != 0 && pai[card - 1] != 0){
+
+        int[] h = pai.clone();
+        h[card]++;
+        if(h[card] != 0 && h[card - 1] != 0 && h[card - 2] != 0) {
             return true;
         }
         return false;
@@ -3590,7 +3617,10 @@ public class MahJongUtils {
      * @param card
      * @return
      */
-    public static boolean isPeng(int[] pai, int card){
+    public static boolean canPeng(int[] pai, Integer card){
+        if(card == null){
+            return  false;
+        }
         return pai[card] == 3;
     }
 
@@ -3600,7 +3630,14 @@ public class MahJongUtils {
      * @param card
      * @return
      */
-    public static boolean isGang(int[] pai, int card){
+    public static boolean canGang(int[] pai, Integer card){
+        if(card == null){
+            for(int k : pai){
+                if(k == 4){
+                    return true;
+                }
+            }
+        }
         return pai[card] == 4;
     }
 
@@ -3703,9 +3740,6 @@ public class MahJongUtils {
         l2.add(19);
         l2.add(20);
         l2.add(21);
-
-//        chi.add(l1);
-//        chi.add(l2);
 
         peng.add(29);
         peng.add(30);

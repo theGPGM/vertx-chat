@@ -3,42 +3,53 @@ package org.george.mahjong.cache.bean;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 0 - 8 万
- * 9 - 17 饼
- * 18 - 26 条
- * 27 - 33 东西南北中发白
- */
+
 public class MahJongPlayerCacheBean {
 
+    /**
+     * 玩家 ID
+     */
     private Integer playerId;
 
-    // 吃的牌
+    /**
+     * 游戏点数
+     */
+    private Integer point;
+
+    /** 以下为副露中的内容 **/
     private List<List<Integer>> chi = new ArrayList<>();
 
-    // 碰的牌
     private List<Integer> peng = new ArrayList<>();
 
-    // 明杠
     private List<Integer> mingGang = new ArrayList<>();
 
-    // 暗杠
     private List<Integer> anGang = new ArrayList<>();
+    /** 以上为副露中的内容 **/
 
-    // 手牌
-    private int[] handCard = new int[34];
+    /**
+     * 手牌数据结构，有一个 int[] 存储手牌的索引
+     * 0 - 8 为 1 - 9 万
+     * 9 - 17 为 1 - 9 饼
+     * 18 - 26 为 1- 9 条
+     * 27 - 33 东西南北中发白
+     */
+    private int[] handCard;
 
-    // 花牌数
-    private int flowerCard = 0;
+    /**
+     * 花牌数量
+     */
+    private Integer flowerCard = 0;
 
-    // 准备开始游戏
+    /**
+     * 是否处于准备就绪状态
+     */
     private boolean ready = false;
 
-    // 是否离线
+    /**
+     * 是否离线
+     */
     private boolean isOffline = false;
 
-    // 点数
-    private Integer point = 0;
 
     public Integer getPlayerId(){
         return playerId;
@@ -101,17 +112,10 @@ public class MahJongPlayerCacheBean {
     }
 
     public void addHandCards(int[] handCards){
+        this.handCard = new int[34];
         for(int k : handCards){
             handCard[k] ++;
         }
-    }
-
-    public Integer getPoint() {
-        return point;
-    }
-
-    public void setPoint(Integer point) {
-        this.point = point;
     }
 
     public int[] getHandCards(){
@@ -120,14 +124,5 @@ public class MahJongPlayerCacheBean {
 
     public MahJongPlayerCacheBean(Integer playerId) {
         this.playerId = playerId;
-    }
-
-    public void clearCache(){
-        this.chi = new ArrayList<>();
-        this.peng = new ArrayList<>();
-        this.mingGang = new ArrayList<>();
-        this.anGang = new ArrayList<>();
-        this.handCard = new int[34];
-        this.flowerCard = 0;
     }
 }
