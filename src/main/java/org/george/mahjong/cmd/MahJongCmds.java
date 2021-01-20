@@ -352,7 +352,6 @@ public class MahJongCmds {
                             isPeng = true;
                             room.setWhoPeng(p.getPlayerId());
                         }
-
                         // 下家
                         if(i == next){
                             if(MahJongUtils.canLeftChi(handCards, card) || MahJongUtils.canMidChi(handCards, card) || MahJongUtils.canRightChi(handCards, card)){
@@ -364,89 +363,12 @@ public class MahJongCmds {
                         list.add(new Message("" + p.getPlayerId(), option));
                     }
                 }
-
-                // 此处需要判断是否会荒牌
-                boolean flag = false;
                 if(room.getWhoChi() == -1 && room.getWhoGang() == -1 && room.getWhoPeng() == - 1 && room.getWhoHu().size() == 0){
-                    for(int i = 0; i < 3; i++){
-                        // 输出牌局信息
-                        MahJongPlayerCacheBean p = mahJongCache.getPlayerByIndex(roomId, index);
-                        String msg = mahJongInfo(p, room);
-                        list.add(new Message("" + p.getPlayerId(), msg));
-                        // 牌空了，这局游戏结束
-                        Integer drawCard = pickCard(roomId, index);
-                        if(drawCard != -1){
-                            int[] h = p.getHandCards();
-                            h[drawCard]++;
-
-                            boolean isHu = false;
-                            boolean isGang = false;
-                            if(MahJongUtils.canHu(p.getHandCards(), drawCard)){
-                                isHu = calculateHu(card, false, false, false, playerId, roomId);
-                                if(isHu){
-                                    room.addWhoHu(p.getPlayerId());
-                                }
-                            }
-                            if(MahJongUtils.canGang(p.getHandCards(), null)){
-                                isGang = true;
-                            }
-                            String option = getOptions(isHu, false, false, isGang, false);
-                        }else{
-                            // 荒牌，设置标签
-                            flag = true;
-                            break;
-                        }
-                        index = (index + 1) % 4;
-                    }
-                }
-
-                // 荒牌：一盘游戏结束，清除前面的所有消息，重新开始新一轮游戏或者结束游戏
-                if(flag) {
-                    // 清除所有的信息
-                    list.clear();
-                    if (room.getQuan() == 3 && room.getPan() == 3) {
-                        // 游戏彻底结束
-                        mahJongCache.deleteCacheBean(roomId);
-                        for (int i = 0; i < 3; i++) {
-                            MahJongPlayerCacheBean p = mahJongCache.getPlayerByIndex(roomId, i);
-                            list.add(new Message("" + p.getPlayerId(), game_over));
-                        }
-                        log.info("麻将房:{}中的游戏结束了", roomId);
-                    } else {
-                        if (room.getPan() == 3) {
-                            // 一圈游戏结束，换座位
-                            room.setQuan(room.getQuan() + 1);
-                            room.setPan(0);
-                            changePosition(roomId);
-                        } else {
-                            // 一盘游戏结束, 换庄
-                            changeZhuang(mahJongCache.getRoomByRoomId(roomId));
-                            room.setPan(room.getPan() + 1);
-                        }
-                        // 发牌
-                        deal(roomId);
-                        // 向四位玩家发送牌局相关消息
-                        for (int i = 0; i < 4; i++) {
-                            MahJongPlayerCacheBean p = mahJongCache.getPlayerByIndex(roomId, i);
-                            String msg = mahJongInfo(p, room);
-                            list.add(new Message("" + p.getPlayerId(), msg));
-                        }
-                        // 输出庄家能够使用的操作
-                        MahJongPlayerCacheBean zhuang = mahJongCache.getPlayerByIndex(roomId, 0);
-                        boolean isHu = false;
-                        boolean isGang = false;
-                        if (MahJongUtils.canHu(player.getHandCards(), null)) {
-                            isHu = calculateHu(null, true, false, false, playerId, roomId);
-                            if (isHu) {
-                                room.addWhoHu(playerId);
-                            }
-                        }
-                        if(MahJongUtils.canGang(player.getHandCards(), null)) {
-                            isGang = true;
-                            room.setWhoGang(playerId);
-                        }
-                        String option = getOptions(isHu, false, false, isGang, false);
-                        list.add(new Message("" + zhuang.getPlayerId(), option));
+                    // 获取他的下家的索引
+                    MahJongPlayerCacheBean nextPlayer = mahJongCache.getPlayerByIndex(roomId, next);
+                    List<Message> messages = pickCard(nextPlayer.getPlayerId(), roomId);
+                    for(Message msg : messages){
+                        list.add(msg);
                     }
                 }
             }
@@ -493,95 +415,17 @@ public class MahJongCmds {
                 // 将所有与该玩家有关的标志都清除
                 pass(playerId, roomId);
 
-                // 获取打牌的玩家的索引
-                Integer index = mahJongCache.getPlayerIndex(roomId, playerId);
-                // 获取他的下家的索引
-                int next = (index + 1) % 4;
-
-                // 此处需要判断是否会荒牌
-                boolean flag = false;
                 if(room.getWhoChi() == -1 && room.getWhoGang() == -1 && room.getWhoPeng() == - 1 && room.getWhoHu().size() == 0){
-                    for(int i = 0; i < 3; i++){
-                        // 输出牌局信息
-                        MahJongPlayerCacheBean p = mahJongCache.getPlayerByIndex(roomId, index);
-                        String msg = mahJongInfo(p, room);
-                        list.add(new Message("" + p.getPlayerId(), msg));
-                        // 牌空了，这局游戏结束
-                        Integer drawCard = pickCard(roomId, index);
-                        if(drawCard != -1){
-                            int[] h = p.getHandCards();
-                            h[drawCard]++;
-
-                            boolean isHu = false;
-                            boolean isGang = false;
-                            if(MahJongUtils.canHu(p.getHandCards(), drawCard)){
-                                isHu = calculateHu(null, true, false, false, playerId, roomId);
-                                if(isHu){
-                                    room.addWhoHu(p.getPlayerId());
-                                }
-                            }
-                            if(MahJongUtils.canGang(p.getHandCards(), null)){
-                                isGang = true;
-                            }
-                            String option = getOptions(isHu, false, false, isGang, false);
-                            list.add(new Message("" + p.getPlayerId(), option));
-                        }else{
-                            // 荒牌，设置标签
-                            flag = true;
-                            break;
-                        }
-                        index = (index + 1) % 4;
+                    // 获取打牌的玩家的索引
+                    Integer index = mahJongCache.getPlayerIndex(roomId, playerId);
+                    // 获取他的下家的索引
+                    MahJongPlayerCacheBean nextPlayer = mahJongCache.getPlayerByIndex(roomId, (index + 1)  % 4);
+                    List<Message> messages = pickCard(nextPlayer.getPlayerId(), roomId);
+                    for(Message msg : messages){
+                        list.add(msg);
                     }
-                }
-
-                // 荒牌：一盘游戏结束，清除前面的所有消息，重新开始新一轮游戏或者结束游戏
-                if(flag) {
-                    // 清除所有的信息
-                    list.clear();
-                    if (room.getQuan() == 3 && room.getPan() == 3) {
-                        // 游戏彻底结束
-                        mahJongCache.deleteCacheBean(roomId);
-                        for (int i = 0; i < 3; i++) {
-                            MahJongPlayerCacheBean p = mahJongCache.getPlayerByIndex(roomId, i);
-                            list.add(new Message("" + p.getPlayerId(), game_over));
-                        }
-                        log.info("麻将房:{}中的游戏结束了", roomId);
-                    } else {
-                        if (room.getPan() == 3) {
-                            room.setQuan(room.getQuan() + 1);
-                            room.setPan(0);
-                            // 一圈游戏结束，换座位
-                            changePosition(roomId);
-                        } else {
-                            // 一盘游戏结束, 换庄
-                            changeZhuang(mahJongCache.getRoomByRoomId(roomId));
-                            room.setPan(room.getPan() + 1);
-                        }
-                        // 发牌
-                        deal(roomId);
-                        // 向四位玩家发送牌局相关消息
-                        for (int i = 0; i < 4; i++) {
-                            MahJongPlayerCacheBean p = mahJongCache.getPlayerByIndex(roomId, i);
-                            String msg = mahJongInfo(p, room);
-                            list.add(new Message("" + p.getPlayerId(), msg));
-                        }
-                        // 输出庄家能够使用的操作
-                        MahJongPlayerCacheBean zhuang = mahJongCache.getPlayerByIndex(roomId, 0);
-                        boolean isHu = false;
-                        boolean isGang = false;
-                        if (MahJongUtils.canHu(zhuang.getHandCards(), null)) {
-                            isHu = calculateHu(null, true, false, false, playerId, roomId);
-                            if (isHu) {
-                                room.addWhoHu(playerId);
-                            }
-                        }
-                        if(MahJongUtils.canGang(zhuang.getHandCards(), null)) {
-                            isGang = true;
-                            room.setWhoGang(playerId);
-                        }
-                        String option = getOptions(isHu, false, false, isGang, false);
-                        list.add(new Message("" + zhuang.getPlayerId(), option));
-                    }
+                }else{
+                    list.add(new Message(userId, "您跳过了" + getCardInfo(room.getPlayCard())));
                 }
             }
         }finally {
@@ -746,6 +590,90 @@ public class MahJongCmds {
             JedisPool.returnJedis(jedis);
         }
         return new Messages(list);
+    }
+
+
+    private List<Message> pickCard(Integer playerId, Integer roomId){
+        List<Message> list = new ArrayList<>();
+        MahJongRoomCacheBean room = mahJongCache.getRoomByRoomId(roomId);
+        MahJongPlayerCacheBean player = mahJongCache.getPlayerByPlayerId(roomId, playerId);
+        List<Integer> cardWall = room.getCardWall();
+
+        while(cardWall.get(0) != 34 && cardWall.size() != 0){
+            player.addFlowerCard(1);
+            cardWall.remove(0);
+        }
+
+        // 荒牌
+        if(cardWall.size() == 0){
+            if (room.getQuan() == 3 && room.getPan() == 3) {
+                // 游戏彻底结束
+                mahJongCache.deleteCacheBean(roomId);
+                for (int i = 0; i < 3; i++) {
+                    MahJongPlayerCacheBean p = mahJongCache.getPlayerByIndex(roomId, i);
+                    list.add(new Message("" + p.getPlayerId(), game_over));
+                }
+                log.info("麻将房:{}中的游戏结束了", roomId);
+            } else {
+                if (room.getPan() == 3) {
+                    // 一圈游戏结束，换座位
+                    room.setQuan(room.getQuan() + 1);
+                    room.setPan(0);
+                    changePosition(roomId);
+                } else {
+                    // 一盘游戏结束, 换庄
+                    changeZhuang(mahJongCache.getRoomByRoomId(roomId));
+                    room.setPan(room.getPan() + 1);
+                }
+                // 发牌
+                deal(roomId);
+                // 向四位玩家发送牌局相关消息
+                for (int i = 0; i < 4; i++) {
+                    MahJongPlayerCacheBean p = mahJongCache.getPlayerByIndex(roomId, i);
+                    String msg = mahJongInfo(p, room);
+                    list.add(new Message("" + p.getPlayerId(), msg));
+                }
+                // 输出庄家能够使用的操作
+                MahJongPlayerCacheBean zhuang = mahJongCache.getPlayerByIndex(roomId, 0);
+                boolean isHu = false;
+                boolean isGang = false;
+                if (MahJongUtils.canHu(zhuang.getHandCards(), null)) {
+                    isHu = calculateHu(null, true, false, false, playerId, roomId);
+                    if (isHu) {
+                        room.addWhoHu(zhuang.getPlayerId());
+                    }
+                }
+                if(MahJongUtils.canGang(zhuang.getHandCards(), null)) {
+                    isGang = true;
+                    room.setWhoGang(zhuang.getPlayerId());
+                }
+                String option = getOptions(isHu, false, false, isGang, false);
+                list.add(new Message("" + zhuang.getPlayerId(), option));
+            }
+        }else{
+            // 输出牌局信息
+            String msg = mahJongInfo(player, room);
+            list.add(new Message("" + player.getPlayerId(), msg));
+            // 牌空了，这局游戏结束
+            Integer drawCard = cardWall.remove(0);
+            int[] h = player.getHandCards();
+            h[drawCard]++;
+
+            boolean isHu = false;
+            boolean isGang = false;
+            if(MahJongUtils.canHu(player.getHandCards(), drawCard)){
+                isHu = calculateHu(null, true, false, false, playerId, roomId);
+                if(isHu){
+                    room.addWhoHu(player.getPlayerId());
+                }
+            }
+            if(MahJongUtils.canGang(player.getHandCards(), null)){
+                isGang = true;
+            }
+            String option = getOptions(isHu, false, false, isGang, false);
+            list.add(new Message("" + player.getPlayerId(), option));
+        }
+        return list;
     }
 
     /**
@@ -916,22 +844,6 @@ public class MahJongCmds {
         MahJongPlayerCacheBean temp = list.get(i);
         list.set(i, list.get(j));
         list.set(j, temp);
-    }
-
-    private Integer pickCard(Integer roomId, Integer index) {
-        MahJongRoomCacheBean room = mahJongCache.getRoomByRoomId(roomId);
-        List<Integer> cardWall = room.getCardWall();
-
-        MahJongPlayerCacheBean p = mahJongCache.getPlayerByIndex(roomId, index);
-        while(cardWall.get(0) == 34 && cardWall.size() != 0){
-            cardWall.remove(0);
-            p.addFlowerCard(1);
-        }
-
-        if(cardWall.size() == 0){
-            return -1;
-        }
-        return cardWall.remove(0);
     }
 
     private void setRandPosition(MahJongRoomCacheBean room) {
