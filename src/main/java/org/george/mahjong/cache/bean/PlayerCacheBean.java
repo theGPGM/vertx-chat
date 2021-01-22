@@ -1,7 +1,5 @@
 package org.george.mahjong.cache.bean;
 
-import org.george.mahjong.pojo.HuState;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,11 +25,25 @@ public class PlayerCacheBean {
 
     private List<Integer> anGangs = new ArrayList<>();
 
+    private boolean tianHu = false;
+
+    private boolean ziMo = false;
+
+    private boolean fanPao = false;
+
+    private boolean qiangGangHu = false;
+
+    private boolean chi = false;
+
     private boolean mingGang = false;
 
     private boolean anGang = false;
 
-    private HuState huState = HuState.NotHu;
+    private boolean gangMoHu = false;
+
+    private boolean peng = false;
+
+    private boolean needPlay = false;
 
     /**
      * 摸的牌
@@ -112,12 +124,44 @@ public class PlayerCacheBean {
         this.anGangs = anGangs;
     }
 
-    public HuState getHuState() {
-        return huState;
+    public boolean isTianHu() {
+        return tianHu;
     }
 
-    public void setHuState(HuState huState) {
-        this.huState = huState;
+    public void setTianHu(boolean tianHu) {
+        this.tianHu = tianHu;
+    }
+
+    public boolean isZiMo() {
+        return ziMo;
+    }
+
+    public void setZiMo(boolean ziMo) {
+        this.ziMo = ziMo;
+    }
+
+    public boolean isFanPao() {
+        return fanPao;
+    }
+
+    public void setFanPao(boolean fanPao) {
+        this.fanPao = fanPao;
+    }
+
+    public boolean isQiangGangHu() {
+        return qiangGangHu;
+    }
+
+    public void setQiangGangHu(boolean qiangGangHu) {
+        this.qiangGangHu = qiangGangHu;
+    }
+
+    public boolean isChi() {
+        return chi;
+    }
+
+    public void setChi(boolean chi) {
+        this.chi = chi;
     }
 
     public boolean isMingGang() {
@@ -134,6 +178,30 @@ public class PlayerCacheBean {
 
     public void setAnGang(boolean anGang) {
         this.anGang = anGang;
+    }
+
+    public boolean isGangMoHu() {
+        return gangMoHu;
+    }
+
+    public void setGangMoHu(boolean gangMoHu) {
+        this.gangMoHu = gangMoHu;
+    }
+
+    public boolean isPeng() {
+        return peng;
+    }
+
+    public void setPeng(boolean peng) {
+        this.peng = peng;
+    }
+
+    public boolean isNeedPlay() {
+        return needPlay;
+    }
+
+    public void setNeedPlay(boolean needPlay) {
+        this.needPlay = needPlay;
     }
 
     public Integer getDrawCard() {

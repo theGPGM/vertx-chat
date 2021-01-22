@@ -1,5 +1,9 @@
 package org.george.mahjong.uitl;
 
+import org.george.mahjong.cache.MahJongCache;
+import org.george.mahjong.cache.bean.PlayerCacheBean;
+import org.george.mahjong.cache.bean.RoomCacheBean;
+
 import java.util.*;
 
 /**
@@ -3669,10 +3673,402 @@ public class MahJongUtils {
         return list;
     }
 
+    /**
+     * 判断是否能达到 8 番
+     * @param card
+     * @param isZiMo
+     * @param isGangMoPai
+     * @param isQiangGangHu
+     * @param playerId
+     * @param roomId
+     * @return
+     */
+    public static boolean calculateHu(Integer card, boolean isZiMo, boolean isGangMoPai, boolean isQiangGangHu, Integer playerId, Integer roomId){
+        MahJongCache mahJongCache = MahJongCache.getInstance();
+        RoomCacheBean roomCacheBean = mahJongCache.getRoomByRoomId(roomId);
+        PlayerCacheBean player = mahJongCache.getPlayerByPlayerId(roomId, playerId);
+
+        int count = 0;
+        if(card != null){
+            for(int k : roomCacheBean.getCardWall()){
+                if(k == card){
+                    count++;
+                }
+            }
+        }
+
+        int[] h = player.getHandCard();
+
+        Map<String, Object> param = new HashMap<>();
+        param.put("isZiMo", isZiMo);
+        param.put("isLastCard", roomCacheBean.getCardWall().size() == 0);
+        param.put("isGangMoPai", isGangMoPai);
+        param.put("isQiangGangHu", isQiangGangHu);
+        param.put("isHuJueZhang", card != null && count == 0);
+        param.put("quanFeng", roomCacheBean.getQuan());
+        param.put("menFeng", mahJongCache.getPlayerIndex(roomCacheBean.getRoomId(), player.getPlayerId()));
+        param.put("chi", player.getChis());
+        param.put("peng", player.getPengs());
+        param.put("mingGang", player.getMingGangs());
+        param.put("anGang", player.getAnGangs());
+        param.put("huCard", card);
+        param.put("flowerCount", player.getFlowerCard());
+        Map<String, Integer> map = MahJongUtils.calculate(h, param);
+
+        int point = 0;
+        for(Integer p : map.values()){
+            point += p;
+        }
+
+        if(point >= 8){
+            return true;
+        }
+        return false;
+    }
+
+    public static Map<String, Integer> calculateFan(Integer card, Integer menFeng, boolean isZiMo, boolean isGangMoPai, boolean isQiangGangHu, PlayerCacheBean player, RoomCacheBean room){
+
+        // 门风：mahJongCache.getPlayerIndex(room.getRoomId(), player.getPlayerId())
+
+        int count = 0;
+        if(card != null){
+            for(int k : room.getCardWall()){
+                if(k == card){
+                    count++;
+                }
+            }
+        }
+
+        int[] h = player.getHandCard();
+
+        Map<String, Object> param = new HashMap<>();
+        param.put("isZiMo", isZiMo);
+        param.put("isLastCard", room.getCardWall().size() == 0);
+        param.put("isGangMoPai", isGangMoPai);
+        param.put("isQiangGangHu", isQiangGangHu);
+        param.put("isHuJueZhang", card != null && count == 0);
+        param.put("quanFeng", room.getQuan());
+        param.put("menFeng", menFeng);
+        param.put("chi", player.getChis());
+        param.put("peng", player.getPengs());
+        param.put("mingGang", player.getMingGangs());
+        param.put("anGang", player.getAnGangs());
+        param.put("huCard", card);
+        param.put("flowerCount", player.getFlowerCard());
+        Map<String, Integer> map = MahJongUtils.calculate(h, param);
+        return map;
+    }
+
+    private static void swapPos(List<PlayerCacheBean> list, int i, int j){
+        PlayerCacheBean temp = list.get(i);
+        list.set(i, list.get(j));
+        list.set(j, temp);
+    }
+
+    public static void setRandPosition(RoomCacheBean room) {
+        Random random = new Random();
+        List<PlayerCacheBean> list = room.getList();
+        for(int i = 3; i >= 0; i--){
+            swapPos(list, i, random.nextInt(i + 1));
+        }
+    }
+
+    public static void changeZhuang(RoomCacheBean room){
+        List<PlayerCacheBean> list = room.getList();
+        PlayerCacheBean first = list.remove(0);
+        list.add(first);
+    }
+
+    /**
+     * 换座位
+     */
+    public static void changePosition(RoomCacheBean room){
+        List<PlayerCacheBean> list = room.getList();
+        int quan = room.getQuan();
+
+        // 先换庄恢复之前的状态
+        changeZhuang(room);
+
+        // 东风圈
+        if(quan == 0 || quan == 2){
+            swapPos(list, 0, 1);
+            swapPos(list, 2, 3);
+        }else{
+            swapPos(list, 0, 3);
+            swapPos(list, 1, 2);
+            swapPos(list, 2, 3);
+        }
+    }
+
+    public static void deal( List<PlayerCacheBean> players, List<Integer> cards){
+
+        // 发牌
+        int[] h1 = new int[34];
+        int[] h2 = new int[34];
+        int[] h3 = new int[34];
+        int[] h4 = new int[34];
+
+        for(int i = 0; i < 14; i++) {
+            while(cards.get(0) == 34){
+                players.get(0).addFlowerCard(1);
+                cards.remove(0);
+            }
+            h1[cards.remove(0)]++;
+        }
+        players.get(0).setHandCard(h1);
+
+        for(int i = 0; i < 13; i++){
+            while(cards.get(0) == 34){
+                players.get(1).addFlowerCard(1);
+                cards.remove(0);
+            }
+            h2[cards.remove(0)]++;
+        }
+        players.get(1).setHandCard(h2);
+
+        for(int i = 0; i < 13; i++){
+            while(cards.get(0) == 34){
+                players.get(2).addFlowerCard(1);
+                cards.remove(0);
+            }
+            h3[cards.remove(0)]++;
+        }
+        players.get(2).setHandCard(h3);
+
+        for(int i = 0; i < 13; i++){
+            while(cards.get(0) == 34){
+                players.get(3).addFlowerCard(1);
+                cards.remove(0);
+            }
+            h4[cards.remove(0)]++;
+        }
+        players.get(3).setHandCard(h4);
+    }
+
+    public static String mahJongInfo(PlayerCacheBean p, RoomCacheBean r) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("=================================================================\r\n");
+        sb.append("牌池: \r\n");
+        sb.append(getCardsInfo(r.getCardPool()));
+        sb.append("您的手牌: \r\n");
+        sb.append(getHandCardInfo(p.getHandCard()) + "\r\n");
+        sb.append("您的碰:\r\n");
+        sb.append(getCardsInfo(p.getPengs()));
+        sb.append("您的暗杠:\r\n");
+        sb.append(getCardsInfo(p.getAnGangs()));
+        sb.append("您的明杠:\r\n");
+        sb.append(getCardsInfo(p.getMingGangs()));
+        sb.append("您的花牌数量: " + p.getFlowerCard() + "\r\n");
+        sb.append("=================================================================");
+        return sb.toString();
+    }
+
+    /**
+     * 返回玩家所有能够使用的操作
+     * @param isHu
+     * @param isChi
+     * @param isPeng
+     * @param isGang
+     * @return
+     */
+    public static String getOptions(boolean isPlay, boolean isHu, boolean isChi, boolean isPeng, boolean isGang){
+
+        boolean isPass = false;
+        if(isChi || isPeng || isGang){
+            isPass = true;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        if(!isPlay && !isHu && !isChi && !isPeng && !isGang && !isPass){
+            sb.append("您无可使用的操作");
+        }else{
+            sb.append("=================================\r\n");
+            sb.append("您可以使用的操作如下：");
+            if(isPlay){
+                sb.append("[play:[num]]:打一张牌\r\n");
+            }if(isHu){
+                sb.append("[hu]:胡\r\n");
+            }
+            if(isGang){
+                sb.append("[gang]杠\r\n");
+            }
+            if(isPeng){
+                sb.append("[peng]碰\r\n");
+            }
+            if(isChi){
+                sb.append("[chi:0、1、2]: 左、中、右吃\r\n");
+            }
+            if(isPass){
+                sb.append("[pass]过\r\n");
+            }
+            sb.append("=================================");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 获取玩家手牌的信息
+     * @param h
+     * @return
+     */
+    private static String getHandCardInfo(int[] h){
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < h.length; i++){
+            if(h[i] != 0){
+                for(int j = 0; j < h[i]; j++){
+                    sb.append(getCardInfo(i));
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 获得牌池的信息
+     * @param cardPool
+     * @return
+     */
+    private static String getCardsInfo(List<Integer> cardPool) {
+        if(cardPool.size() == 0){
+            return "无";
+        }
+        StringBuilder sb = new StringBuilder();
+        // 每二十张牌显示一行
+        for(int i = 0; i < cardPool.size(); i += 20){
+            for(int j = i; j < i + 20; j++){
+                if(cardPool.get(j) < 9){
+                    sb.append("|" + oneToNight(cardPool.get(j)) + "万|");
+                }else if(cardPool.get(j) < 18){
+                    sb.append("|" + oneToNight(cardPool.get(j) % 9) + "饼|");
+                }else if(cardPool.get(j) < 27){
+                    sb.append("|" + oneToNight(cardPool.get(j) % 9) + "条|");
+                }else{
+                    sb.append("|" + numToTile(cardPool.get(j) - 27) + "|");
+                }
+                if(j == cardPool.size() - 1){
+                    break;
+                }
+            }
+            sb.append("\r\n");
+        }
+        return sb.toString();
+    }
+
+    public static String getCardInfo(int card){
+        if(card < 9){
+            return "|" + oneToNight(card) + "万|";
+        }else if(card < 18){
+            return "|" + oneToNight(card % 9) + "饼|";
+        }else if(card < 27){
+            return "|" + oneToNight(card % 9) + "条|";
+        }else{
+            return "|" + numToTile(card - 27) + "|";
+        }
+    }
+
+    /**
+     * 将数字转化为大写数字
+     * @param num
+     * @return
+     */
+    private static String oneToNight(int num){
+        switch(num) {
+            case 0:
+                return "一";
+            case 1:
+                return "二";
+            case 2:
+                return "三";
+            case 3 :
+                return "四";
+            case 4:
+                return "五";
+            case 5:
+                return "六";
+            case 6 :
+                return "七";
+            case 7:
+                return "八";
+            case 8:
+                return "九";
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * 将数字转化为东西南北中发白
+     * @param num
+     * @return
+     */
+    private static String numToTile(int num){
+        switch(num) {
+            case 0:
+                return "东";
+            case 1:
+                return "南";
+            case 2:
+                return "西";
+            case 3 :
+                return "北";
+            case 4:
+                return "中";
+            case 5:
+                return "发";
+            case 6 :
+                return "白";
+            default:
+                return null;
+        }
+    }
+
+    public static String fangInfo(Map<String, Integer> map){
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("=======================================\r\n");
+        sb.append("您的番数:\r\n");
+        for(Map.Entry<String,Integer> entry : map.entrySet()){
+            sb.append(entry.getKey());
+            sb.append(":");
+            sb.append(entry.getValue());
+        }
+        sb.append("=======================================");
+        return sb.toString();
+    }
+
     private static void swap(List<Integer> list, int l, int r){
         Integer temp = list.get(l);
         list.set(l, list.get(r));
         list.set(r, temp);
+    }
+
+    public static void clearPlayerState(PlayerCacheBean player) {
+        player.setAnGang(false);
+        player.setMingGang(false);
+        player.setGangMoHu(false);
+        player.setPeng(false);
+        player.setChi(false);
+        player.setTianHu(false);
+        player.setQiangGangHu(false);
+        player.setZiMo(false);
+        player.setFanPao(false);
+        player.setNeedPlay(false);
+    }
+
+    public static void clearRoomState(RoomCacheBean room){
+        room.setWhoChi(-1);
+        room.setWhoMingGang(-1);
+        room.setWhoPlay(-1);
+        room.setWhoPeng(-1);
+        room.setWhoHu(-1);
+    }
+
+    public static Integer countFan(Map<String, Integer> map){
+        int count = 0;
+        for(Map.Entry<String,Integer> entry : map.entrySet()){
+            count += entry.getValue();
+        }
+        return count;
     }
 
     public static void main(String[] args) {
