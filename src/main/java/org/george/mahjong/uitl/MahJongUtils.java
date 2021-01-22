@@ -3621,7 +3621,7 @@ public class MahJongUtils {
         if(card == null){
             return  false;
         }
-        return pai[card] == 3;
+        return pai[card] == 2;
     }
 
     /**
@@ -3637,8 +3637,9 @@ public class MahJongUtils {
                     return true;
                 }
             }
+            return false;
         }
-        return pai[card] == 4;
+        return pai[card] == 3;
     }
 
     /**
